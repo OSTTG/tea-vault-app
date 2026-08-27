@@ -38,9 +38,7 @@
       letter-spacing: 0.5px;
     }
 
-    .form-group {
-      margin-bottom: 14px;
-    }
+    .form-group { margin-bottom: 14px; }
 
     label {
       display: block;
@@ -63,15 +61,9 @@
       outline: none;
     }
 
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--accent-color);
-    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent-color); }
 
-    /* Стилізація кнопки вибору файлу */
-    input[type="file"] {
-      padding: 8px;
-      font-size: 12px;
-    }
+    input[type="file"] { padding: 8px; font-size: 12px; }
 
     .btn {
       width: 100%;
@@ -103,6 +95,8 @@
       font-size: 12px;
       width: auto;
       margin-top: 0;
+      cursor: pointer;
+      border-radius: 8px;
     }
 
     .btn-share {
@@ -113,6 +107,8 @@
       font-size: 12px;
       width: auto;
       margin-top: 0;
+      cursor: pointer;
+      border-radius: 8px;
     }
 
     .tea-list { margin-top: 24px; }
@@ -132,10 +128,7 @@
       margin-bottom: 10px;
     }
 
-    .tea-title {
-      font-size: 16px;
-      font-weight: 700;
-    }
+    .tea-title { font-size: 16px; font-weight: 700; }
 
     .badge {
       background: #3d2b1f;
@@ -147,10 +140,7 @@
       border: 1px solid #543c2c;
     }
 
-    .card-body {
-      display: flex;
-      gap: 12px;
-    }
+    .card-body { display: flex; gap: 12px; }
 
     .tea-img {
       width: 75px;
@@ -161,9 +151,7 @@
       border: 1px solid var(--border-color);
     }
 
-    .tea-info {
-      flex-grow: 1;
-    }
+    .tea-info { flex-grow: 1; }
 
     .notes-box {
       background: rgba(0, 0, 0, 0.25);
@@ -174,6 +162,7 @@
       border-radius: 0 8px 8px 0;
       color: #d1c9bf;
       line-height: 1.4;
+      white-space: pre-wrap;
     }
 
     .card-actions {
@@ -185,7 +174,6 @@
       border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* Шаблон для PDF */
     #pdf-template {
       display: none;
       background: #faf7f2;
@@ -254,27 +242,72 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    let teas = JSON.parse(localStorage.getItem('my_teas_ukr')) || [];
+    let teas = [];
     let currentPhotoBase64 = "";
 
-    // Обробник вибору фото
+    // 1. Завантаження даних з Telegram CloudStorage або LocalStorage
+    function loadTeas() {
+      if (tg.CloudStorage) {
+        tg.CloudStorage.getItem('my_teas_cloud', (err, value) => {
+          let cloudTeas = [];
+          if (!err && value) {
+            try { cloudTeas = JSON.parse(value); } catch(e) {}
+          }
+          
+          let localTeas = JSON.parse(localStorage.getItem('my_teas_ukr')) || [];
+          
+          // Об'єднуємо дані: якщо позиції є у хмарі, але немає фото, підтягуємо локальні фото
+          if (cloudTeas.length > 0) {
+            teas = cloudTeas.map(cTea => {
+              const match = localTeas.find(lTea => lTea.name === cTea.name && lTea.year === cTea.year);
+              return { ...cTea, photo: match ? match.photo : "" };
+            });
+          } else {
+            teas = localTeas;
+          }
+          renderTeas();
+        });
+      } else {
+        teas = JSON.parse(localStorage.getItem('my_teas_ukr')) || [];
+        renderTeas();
+      }
+    }
+
+    // 2. Збереження (текст у хмару, важкі фото — в пам'ять пристрою)
+    function saveTeas() {
+      localStorage.setItem('my_teas_ukr', JSON.stringify(teas));
+
+      if (tg.CloudStorage) {
+        const lightTeas = teas.map(t => ({
+          name: t.name,
+          year: t.year,
+          category: t.category,
+          notes: t.notes
+        }));
+        
+        tg.CloudStorage.setItem('my_teas_cloud', JSON.stringify(lightTeas), (err) => {
+          if (err) console.error("CloudStorage save error:", err);
+        });
+      }
+    }
+
+    // Обробка фото із автоматичним стисненням
     document.getElementById('teaPhoto').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(event) {
-          // Сжимаємо фото через Canvas для економії пам'яті
           const img = new Image();
           img.src = event.target.result;
           img.onload = function() {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 400;
+            const MAX_WIDTH = 350;
             const scaleFactor = MAX_WIDTH / img.width;
             canvas.width = MAX_WIDTH;
             canvas.height = img.height * scaleFactor;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.65);
           }
         };
         reader.readAsDataURL(file);
@@ -295,7 +328,6 @@
       teas.forEach((tea, index) => {
         const photoHtml = tea.photo ? `<img src="${tea.photo}" class="tea-img">` : '';
 
-        // Карточка в додатку
         list.innerHTML += `
           <div class="tea-card">
             <div class="card-header">
@@ -309,13 +341,12 @@
               </div>
             </div>
             <div class="card-actions">
-              <button class="btn btn-share" onclick="shareTea(${index})">✈️ Поділитися в чат</button>
+              <button class="btn btn-share" onclick="shareTea(${index})">✈️ Поділитися</button>
               <button class="btn btn-danger" onclick="deleteTea(${index})">🗑 Видалити</button>
             </div>
           </div>
         `;
 
-        // Верстка для PDF
         const pdfPhotoHtml = tea.photo ? `<img src="${tea.photo}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; float: left; margin-right: 12px;">` : '';
         pdfContent.innerHTML += `
           <div style="background: #fff; padding: 14px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #e8e2d8; page-break-inside: avoid; overflow: hidden;">
@@ -348,9 +379,8 @@
         photo: currentPhotoBase64
       });
 
-      localStorage.setItem('my_teas_ukr', JSON.stringify(teas));
+      saveTeas();
       
-      // Скидання форми
       document.getElementById('teaName').value = '';
       document.getElementById('teaNotes').value = '';
       document.getElementById('teaPhoto').value = '';
@@ -362,16 +392,22 @@
     function deleteTea(index) {
       if (confirm('Видалити цей чай з колекції?')) {
         teas.splice(index, 1);
-        localStorage.setItem('my_teas_ukr', JSON.stringify(teas));
+        saveTeas();
         renderTeas();
       }
     }
 
     function shareTea(index) {
       const tea = teas[index];
-      const text = `🍵 *${tea.name}* (${tea.year} р.)\nКатегорія: #${tea.category.replace(/\s+/g, '_')}\n\n📝 *Враження:* ${tea.notes || 'Смачний чай!'}\n\n_Збережено в Чайному Складі_`;
       
-      const shareUrl = `https://t.me/share/url?url=&text=${encodeURIComponent(text)}`;
+      const cardText = `🍃 *${tea.name.toUpperCase()}* (${tea.year} р.)\n` +
+                       `━━━━━━━━━━━━━━━━━━\n` +
+                       `🏷 *Категорія:* #${tea.category.replace(/\s+/g, '_')}\n` +
+                       `📝 *Враження та дегустація:*\n${tea.notes || 'Чудовий чай, рекомендую!'}\n` +
+                       `━━━━━━━━━━━━━━━━━━\n` +
+                       `📌 _Збережено в Чайному Складі_`;
+
+      const shareUrl = `https://t.me/share/url?url=&text=${encodeURIComponent(cardText)}`;
       tg.openTelegramLink(shareUrl);
     }
 
@@ -394,7 +430,7 @@
       });
     }
 
-    renderTeas();
+    loadTeas();
   </script>
 </body>
 </html>
