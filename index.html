@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Чайний Склад</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   
   <style>
     :root {
@@ -60,12 +59,6 @@
       margin-top: 6px;
     }
     .btn:active { opacity: 0.8; }
-
-    .btn-secondary {
-      background: #322b24;
-      color: var(--accent-color);
-      border: 1px solid #4a3e32;
-    }
 
     .btn-cancel {
       background: transparent;
@@ -162,15 +155,6 @@
       padding-top: 10px;
       border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
-
-    /* Шаблон для PDF */
-    #pdf-wrapper {
-      display: none;
-      background: #ffffff;
-      color: #111111;
-      padding: 24px;
-      font-family: Arial, sans-serif;
-    }
   </style>
 </head>
 <body>
@@ -215,17 +199,8 @@
 
   <button class="btn" id="saveBtn" onclick="saveTeaHandler()">Додати до колекції</button>
   <button class="btn btn-cancel" id="cancelBtn" onclick="resetForm()" style="display: none; margin-top: 6px;">Скасувати редагування</button>
-  <button class="btn btn-secondary" onclick="downloadPDF()">📄 Завантажити PDF-каталог</button>
 
   <div class="tea-list" id="teaList"></div>
-
-  <!-- Блок генерации PDF -->
-  <div id="pdf-wrapper">
-    <h1 style="color: #1a1615; margin-bottom: 12px; border-bottom: 2px solid #e5a968; padding-bottom: 6px; font-size: 22px;">
-      🍃 Моя Чайна Колекція
-    </h1>
-    <div id="pdfContent"></div>
-  </div>
 
   <script>
     const tg = window.Telegram.WebApp;
@@ -407,64 +382,24 @@
       }
     }
 
-    // 3. ЧИСТЫЙ И ЧИТАЕМЫЙ ТЕКСТ ПРИ ОТПРАВКЕ
+    // КРАСИВЫЙ И ЧИСТЫЙ ФОРМАТ ДЛЯ ОТПРАВКИ СО СМАЙЛИКАМИ
     function shareTea(id) {
       const tea = teas.find(t => t.id === id);
       if (!tea) return;
 
-      let cardText = `${tea.name} (${tea.year})\n`;
-      cardText += `Категорія: ${tea.category}\n`;
+      const categoryTag = tea.category.replace(/\s+/g, '_');
+      
+      let cardText = `🍃 ${tea.name.toUpperCase()} (${tea.year} р.)\n`;
+      cardText += `━━━━━━━━━━━━━━━━━━\n`;
+      cardText += `🏷 Категорія: #${categoryTag}\n`;
       if (tea.notes) {
-        cardText += `\n${tea.notes}`;
+        cardText += `📝 Враження:\n${tea.notes}\n`;
       }
+      cardText += `━━━━━━━━━━━━━━━━━━\n`;
+      cardText += `📌 Чайний Склад`;
 
       const shareUrl = `https://t.me/share/url?url=&text=${encodeURIComponent(cardText)}`;
       tg.openTelegramLink(shareUrl);
-    }
-
-    // 1. ИСПРАВЛЕННЫЙ PDF БЕЗ БЕЛОГО ЭКРАНА
-    function downloadPDF() {
-      if (teas.length === 0) return alert('Колекція порожня!');
-
-      const wrapper = document.getElementById('pdf-wrapper');
-      const content = document.getElementById('pdfContent');
-      content.innerHTML = '';
-
-      teas.forEach(tea => {
-        const photoHtml = tea.photo ? `<img src="${tea.photo}" style="width: 55px; height: 55px; object-fit: cover; border-radius: 6px; margin-right: 12px; float: left;">` : '';
-        content.innerHTML += `
-          <div style="background: #f9f8f6; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2d7c7; page-break-inside: avoid;">
-            <div style="font-size: 15px; font-weight: bold; color: #1a1615; margin-bottom: 4px;">
-              ${tea.name} (${tea.year} р.) — <span style="color: #b87b3b; font-weight: normal;">${tea.category}</span>
-            </div>
-            <div>
-              ${photoHtml}
-              <div style="font-size: 12px; color: #38302a; line-height: 1.4;">
-                ${tea.notes || 'Без опису'}
-              </div>
-              <div style="clear: both;"></div>
-            </div>
-          </div>
-        `;
-      });
-
-      // Делаем элемент видимым на время конвертации
-      wrapper.style.display = 'block';
-
-      const opt = {
-        margin:       10,
-        filename:     'Moya_Chaina_Kolektsiya.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, logging: false },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(opt).from(wrapper).save().then(() => {
-        wrapper.style.display = 'none';
-      }).catch(err => {
-        wrapper.style.display = 'none';
-        console.error("PDF Error:", err);
-      });
     }
 
     loadTeas();
