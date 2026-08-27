@@ -8,49 +8,62 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg-color: #121212;
-      --card-bg: #1e1e1e;
-      --text-color: #ffffff;
-      --accent-color: #4CAF50;
-      --danger-color: #ff4d4d;
-      --input-bg: #2d2d2d;
-      --star-color: #ffc107;
+      --bg-color: #121417;
+      --card-bg: #1c1f26;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #4ea8de;
+      --accent-hover: #3a88c8;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --input-bg: #262a34;
+      --input-border: #374151;
+      --star-color: #fbbf24;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-color);
-      color: var(--text-color);
+      color: var(--text-main);
       margin: 0;
       padding: 15px;
-      padding-bottom: 80px;
+      padding-bottom: 90px;
+      -webkit-tap-highlight-color: transparent;
     }
 
     h2, h3, h4 {
       margin-top: 0;
+      font-weight: 600;
     }
 
-    /* Табы (Навигация) */
+    /* Навигация */
     .tabs {
       display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
+      gap: 8px;
+      margin-bottom: 16px;
     }
 
     .tab-btn {
       flex: 1;
       padding: 12px;
-      border: none;
+      border: 1px solid var(--card-border);
       background-color: var(--card-bg);
-      color: var(--text-color);
-      font-weight: bold;
-      border-radius: 10px;
+      color: var(--text-main);
+      font-weight: 600;
+      border-radius: 12px;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all 0.2s ease;
     }
 
     .tab-btn.active {
-      background-color: var(--accent-color);
+      background-color: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
     }
 
     .tab-content {
@@ -61,24 +74,56 @@
       display: block;
     }
 
+    /* Чипсы категорий для фильтрации */
+    .category-filter {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+      scrollbar-width: none;
+    }
+
+    .category-filter::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip {
+      padding: 8px 14px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      font-size: 13px;
+      white-space: nowrap;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .chip.active {
+      background-color: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
     /* Панель Админа */
     .admin-panel {
       background-color: var(--card-bg);
-      padding: 15px;
-      border-radius: 12px;
-      margin-bottom: 25px;
-      border: 1px solid #333;
+      padding: 18px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      border: 1px solid var(--card-border);
     }
 
     .form-group {
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     .form-group label {
       display: block;
-      margin-bottom: 5px;
-      font-size: 14px;
-      color: #aaa;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
     }
 
     input[type="text"],
@@ -86,90 +131,174 @@
     textarea,
     input[type="file"] {
       width: 100%;
-      padding: 10px;
-      box-sizing: border-box;
+      padding: 11px 14px;
       background-color: var(--input-bg);
-      border: 1px solid #444;
-      border-radius: 8px;
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
       color: #fff;
       font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
     }
 
     textarea {
       resize: vertical;
-      min-height: 70px;
+      min-height: 80px;
     }
 
     .btn-submit {
       width: 100%;
       padding: 12px;
-      background-color: var(--accent-color);
+      background-color: var(--accent);
       color: white;
       border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
       cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-submit:active {
+      background-color: var(--accent-hover);
+    }
+
+    /* Превью фото при редактировании */
+    .image-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .preview-thumb {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .preview-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .preview-thumb .btn-remove-img {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: rgba(239, 68, 68, 0.85);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* Карточки Каталога */
     .catalog-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 15px;
+      gap: 16px;
     }
 
     .tea-card {
       background-color: var(--card-bg);
-      border-radius: 12px;
-      padding: 15px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
 
-    .tea-card img {
+    /* Слайдер / Галерея изображений */
+    .gallery-container {
+      position: relative;
       width: 100%;
-      height: 200px;
+      margin-bottom: 12px;
+    }
+
+    .gallery-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      border-radius: 12px;
+      scrollbar-width: none;
+    }
+
+    .gallery-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .gallery-scroll img {
+      width: 100%;
+      min-width: 100%;
+      height: 220px;
       object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 10px;
+      scroll-snap-align: start;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .badge-category {
+      display: inline-block;
+      padding: 4px 10px;
+      background: rgba(78, 168, 222, 0.15);
+      color: var(--accent);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
     }
 
     .tea-price {
-      color: var(--accent-color);
-      font-weight: bold;
-      font-size: 16px;
+      color: #34d399;
+      font-weight: 700;
+      font-size: 17px;
+      margin: 4px 0 10px 0;
     }
 
     .admin-actions {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       margin-top: 12px;
     }
 
     .btn-edit, .btn-delete, .btn-review-toggle {
-      flex: 1;
-      padding: 8px;
+      padding: 10px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      font-weight: bold;
+      font-weight: 600;
+      font-size: 13px;
+      transition: opacity 0.2s;
     }
 
-    .btn-edit { background-color: #ff9800; color: white; }
-    .btn-delete { background-color: var(--danger-color); color: white; }
-    .btn-review-toggle { background-color: #2196F3; color: white; margin-top: 10px; width: 100%; }
+    .btn-edit { background-color: var(--warning); color: white; flex: 1; }
+    .btn-delete { background-color: var(--danger); color: white; flex: 1; }
+    .btn-review-toggle { background-color: var(--input-bg); color: var(--text-main); border: 1px solid var(--input-border); width: 100%; margin-top: 12px; }
 
-    /* Блок отзывов в карточке */
+    /* Отзывы */
     .reviews-section {
-      margin-top: 15px;
-      border-top: 1px solid #333;
-      padding-top: 12px;
+      margin-top: 16px;
+      border-top: 1px solid var(--card-border);
+      padding-top: 14px;
     }
 
     .review-item {
-      background-color: #282828;
-      padding: 10px;
-      border-radius: 6px;
+      background-color: #232730;
+      padding: 12px;
+      border-radius: 10px;
       margin-bottom: 8px;
       font-size: 13px;
     }
@@ -177,54 +306,99 @@
     .review-header {
       display: flex;
       justify-content: space-between;
-      color: #aaa;
+      color: var(--text-muted);
       margin-bottom: 4px;
     }
 
     .review-rating {
       color: var(--star-color);
-      font-weight: bold;
+      font-weight: 700;
     }
 
     .add-review-form {
       display: none;
-      margin-top: 10px;
-      background: #252525;
-      padding: 10px;
-      border-radius: 8px;
+      margin-top: 12px;
+      background: #232730;
+      padding: 14px;
+      border-radius: 12px;
+    }
+
+    /* Модальное окно (Lightbox) */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.9);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal img {
+      max-width: 90%;
+      max-height: 80%;
+      border-radius: 12px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Навигация по вкладкам -->
+  <!-- Навигация -->
   <div class="tabs" id="tabs-container">
     <button class="tab-btn active" id="tab-btn-catalog" onclick="switchTab(event, 'tab-catalog')">🍵 Каталог</button>
     <button class="tab-btn" id="tab-btn-reviews" onclick="switchTab(event, 'tab-reviews')" style="display: none;">💬 Відгуки</button>
   </div>
 
-  <!-- Вкладка 1: Каталог / Отзывы (для обычных пользователей это единый каталог) -->
+  <!-- Вкладка 1: Каталог -->
   <div id="tab-catalog" class="tab-content active">
     
-    <!-- Панель Администратора (видна только админу) -->
+    <!-- Фильтры по категориям для пользователей -->
+    <div class="category-filter" id="category-filter-chips">
+      <div class="chip active" onclick="filterCategory('all')">Усі</div>
+      <div class="chip" onclick="filterCategory('Шу Пуер')">Шу Пуер</div>
+      <div class="chip" onclick="filterCategory('Шен Пуер')">Шен Пуер</div>
+      <div class="chip" onclick="filterCategory('Улун')">Улун</div>
+      <div class="chip" onclick="filterCategory('Зелений')">Зелений</div>
+      <div class="chip" onclick="filterCategory('Червоний')">Червоний</div>
+      <div class="chip" onclick="filterCategory('Білий')">Білий</div>
+      <div class="chip" onclick="filterCategory('Інше')">Інше</div>
+    </div>
+
+    <!-- Панель Администратора -->
     <div id="admin-panel" class="admin-panel" style="display: none;">
       <h2>👑 Панель Адміна</h2>
       <form id="add-tea-form">
         <div class="form-group">
+          <label>Категорія чаю:</label>
+          <select id="tea-category" required>
+            <option value="Шу Пуер">Шу Пуер</option>
+            <option value="Шен Пуер">Шен Пуер</option>
+            <option value="Улун">Улун</option>
+            <option value="Зелений">Зелений</option>
+            <option value="Червоний">Червоний</option>
+            <option value="Білий">Білий</option>
+            <option value="Інше">Інше</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label>Назва чаю:</label>
-          <input type="text" id="tea-name" required placeholder="Наприклад: Шу Пуер 2018">
+          <input type="text" id="tea-name" required placeholder="Наприклад: Шу Пуер 7562">
         </div>
         <div class="form-group">
           <label>Ціна:</label>
-          <input type="text" id="tea-price" required placeholder="Наприклад: 250 грн / 50г">
+          <input type="text" id="tea-price" required placeholder="Наприклад: 300 грн / 50г">
         </div>
         <div class="form-group">
           <label>Опис:</label>
           <textarea id="tea-desc" required placeholder="Смакові ноти, походження..."></textarea>
         </div>
         <div class="form-group">
-          <label>Завантажити фото з пристрою:</label>
-          <input type="file" id="tea-image-file" accept="image/*">
+          <label>Фотографії (до 5 штук):</label>
+          <input type="file" id="tea-image-files" accept="image/*" multiple>
+          <div id="edit-images-preview" class="image-preview-grid"></div>
         </div>
         <button type="submit" id="submit-btn" class="btn-submit">Додати чай</button>
       </form>
@@ -234,13 +408,18 @@
     <div id="catalog-list" class="catalog-grid"></div>
   </div>
 
-  <!-- Вкладка 2: Отзывы (резервная вкладка админа) -->
+  <!-- Вкладка 2: Отзывы (резерв админа) -->
   <div id="tab-reviews" class="tab-content">
-    <h2>💬 Всі відгуки</h2>
+    <h2>💬 Усі відгуки</h2>
     <div id="all-reviews-list"></div>
   </div>
 
-  <!-- Подключение SDK Firebase (Compat Realtime Database) -->
+  <!-- Модалка просмотра полноразмерных снимков -->
+  <div id="image-modal" class="modal" onclick="closeModal()">
+    <img id="modal-img" src="" alt="Перегляд фото">
+  </div>
+
+  <!-- SDK Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -259,7 +438,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2. Настройки пользователя и Telegram
+    // 2. Идентификация пользователя
     const ADMIN_TELEGRAM_ID = 770549804;
     const tg = window.Telegram?.WebApp;
     if (tg) tg.ready();
@@ -269,8 +448,10 @@
     const isAdmin = (Number(currentUserId) === Number(ADMIN_TELEGRAM_ID));
 
     let editingItemId = null;
+    let editingImagesList = []; // Временное хранение массива картинок при редактировании
+    let currentSelectedCategory = 'all';
 
-    // 3. Настройка интерфейса под роль
+    // 3. Старт
     document.addEventListener('DOMContentLoaded', () => {
       const adminPanel = document.getElementById('admin-panel');
       const tabBtnCatalog = document.getElementById('tab-btn-catalog');
@@ -285,21 +466,26 @@
         tabBtnReviews.style.display = 'none';
       }
 
-      const itemForm = document.getElementById('add-tea-form');
-      if (itemForm) {
-        itemForm.addEventListener('submit', handleFormSubmit);
-      }
-
+      document.getElementById('add-tea-form').addEventListener('submit', handleFormSubmit);
       loadItemsFromFirebase();
     });
 
-    // Переключение вкладок
+    // Навигация по вкладкам
     function switchTab(evt, tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
       document.getElementById(tabId).classList.add('active');
       evt.currentTarget.classList.add('active');
+    }
+
+    // Фильтрация категорий
+    function filterCategory(cat) {
+      currentSelectedCategory = cat;
+      document.querySelectorAll('.chip').forEach(chip => {
+        chip.classList.toggle('active', chip.textContent === (cat === 'all' ? 'Усі' : cat));
+      });
+      loadItemsFromFirebase();
     }
 
     // Base64 конвертер
@@ -312,31 +498,40 @@
       });
     }
 
-    // Сохранение и редактирование товара админом
+    // Добавление / Редактирование товара
     async function handleFormSubmit(e) {
       e.preventDefault();
 
+      const category = document.getElementById('tea-category').value;
       const title = document.getElementById('tea-name').value.trim();
       const price = document.getElementById('tea-price').value.trim();
       const description = document.getElementById('tea-desc').value.trim();
-      const fileInput = document.getElementById('tea-image-file');
+      const fileInput = document.getElementById('tea-image-files');
 
-      let imageUrl = '';
+      let newImages = [...editingImagesList];
 
-      if (fileInput && fileInput.files && fileInput.files[0]) {
-        imageUrl = await fileToBase64(fileInput.files[0]);
+      if (fileInput.files.length > 0) {
+        const availableSlots = 5 - newImages.length;
+        const filesToProcess = Array.from(fileInput.files).slice(0, availableSlots);
+        
+        for (let file of filesToProcess) {
+          const b64 = await fileToBase64(file);
+          newImages.push(b64);
+        }
+      }
+
+      if (newImages.length === 0) {
+        newImages.push('https://via.placeholder.com/400x300?text=No+Image');
       }
 
       const itemData = {
+        category,
         title,
         price,
         description,
+        images: newImages,
         updatedAt: Date.now()
       };
-
-      if (imageUrl) {
-        itemData.image = imageUrl;
-      }
 
       if (editingItemId) {
         db.ref('catalog/' + editingItemId).update(itemData)
@@ -344,26 +539,26 @@
             alert('Позицію оновлено!');
             resetForm();
           })
-          .catch(err => alert('Помилка оновлення: ' + err.message));
+          .catch(err => alert('Помилка: ' + err.message));
       } else {
-        if (!imageUrl) itemData.image = 'https://via.placeholder.com/300x200?text=No+Image';
         db.ref('catalog').push(itemData)
           .then(() => {
-            alert('Позицію додано в каталог!');
+            alert('Позицію додано!');
             resetForm();
           })
-          .catch(err => alert('Помилка збереження: ' + err.message));
+          .catch(err => alert('Помилка: ' + err.message));
       }
     }
 
     function resetForm() {
       editingItemId = null;
+      editingImagesList = [];
       document.getElementById('add-tea-form').reset();
-      const submitBtn = document.getElementById('submit-btn');
-      if (submitBtn) submitBtn.textContent = 'Додати чай';
+      document.getElementById('edit-images-preview').innerHTML = '';
+      document.getElementById('submit-btn').textContent = 'Додати чай';
     }
 
-    // Отрисовка каталога и отзывов
+    // Отображение каталога
     function loadItemsFromFirebase() {
       const catalogContainer = document.getElementById('catalog-list');
 
@@ -373,15 +568,21 @@
         catalogContainer.innerHTML = '';
 
         if (!data) {
-          catalogContainer.innerHTML = '<p style="text-align: center; color: #888;">Каталог поки порожній.</p>';
+          catalogContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Каталог порожній.</p>';
           return;
         }
 
         Object.keys(data).forEach((id) => {
           const item = data[id];
-          const reviews = item.reviews ? Object.values(item.reviews) : [];
 
-          // Расчет среднего рейтинга
+          // Пропуск невыбранных категорий
+          if (currentSelectedCategory !== 'all' && item.category !== currentSelectedCategory) {
+            return;
+          }
+
+          const reviews = item.reviews ? Object.values(item.reviews) : [];
+          const images = Array.isArray(item.images) ? item.images : (item.image ? [item.image] : ['https://via.placeholder.com/400x300?text=No+Image']);
+
           let avgRatingHtml = '';
           if (reviews.length > 0) {
             const sum = reviews.reduce((acc, r) => acc + Number(r.rating), 0);
@@ -392,13 +593,20 @@
           const card = document.createElement('div');
           card.className = 'tea-card';
           card.innerHTML = `
-            <img src="${item.image}" alt="${item.title}">
+            <div class="gallery-container">
+              <div class="gallery-scroll">
+                ${images.map(imgSrc => `<img src="${imgSrc}" onclick="openModal('${imgSrc}')" alt="${item.title}">`).join('')}
+              </div>
+            </div>
+            
+            <span class="badge-category">${item.category || 'Чаї'}</span>
+            
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <h3>${item.title}</h3>
               ${avgRatingHtml}
             </div>
             <p class="tea-price">${item.price}</p>
-            <p style="color: #ccc; font-size: 14px; line-height: 1.4;">${item.description}</p>
+            <p style="color: var(--text-muted); font-size: 14px; line-height: 1.4;">${item.description}</p>
             
             ${isAdmin ? `
               <div class="admin-actions">
@@ -407,7 +615,6 @@
               </div>
             ` : ''}
 
-            <!-- Раздел отзывов к товару -->
             <button class="btn-review-toggle" onclick="toggleReviewForm('${id}')">✍️ Залишити відгук</button>
 
             <div id="form-review-${id}" class="add-review-form">
@@ -427,7 +634,7 @@
 
             <div class="reviews-section">
               <h4>Відгуки (${reviews.length}):</h4>
-              ${reviews.length === 0 ? '<p style="color:#777; font-size:13px;">Поки немає відгуків. Будьте першим!</p>' : ''}
+              ${reviews.length === 0 ? '<p style="color:var(--text-muted); font-size:13px;">Поки немає відгуків.</p>' : ''}
               ${reviews.map(r => `
                 <div class="review-item">
                   <div class="review-header">
@@ -444,13 +651,52 @@
       });
     }
 
-    // Форма добавления отзыва
+    // Редактирование товара
+    window.editItem = function(id) {
+      db.ref('catalog/' + id).once('value').then((snapshot) => {
+        const item = snapshot.val();
+        if (!item) return;
+
+        document.getElementById('tea-category').value = item.category || 'Шу Пуер';
+        document.getElementById('tea-name').value = item.title || '';
+        document.getElementById('tea-price').value = item.price || '';
+        document.getElementById('tea-desc').value = item.description || '';
+
+        editingItemId = id;
+        editingImagesList = Array.isArray(item.images) ? [...item.images] : (item.image ? [item.image] : []);
+        renderPreviewImages();
+
+        document.getElementById('submit-btn').textContent = 'Зберегти зміни';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    };
+
+    // Отрисовка предпросмотра фото в панели админа с функцией удаления
+    function renderPreviewImages() {
+      const container = document.getElementById('edit-images-preview');
+      container.innerHTML = '';
+      editingImagesList.forEach((src, idx) => {
+        const div = document.createElement('div');
+        div.className = 'preview-thumb';
+        div.innerHTML = `
+          <img src="${src}">
+          <button type="button" class="btn-remove-img" onclick="removeImageFromEdit(${idx})">✕</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    window.removeImageFromEdit = function(index) {
+      editingImagesList.splice(index, 1);
+      renderPreviewImages();
+    };
+
+    // Форма отзыва
     window.toggleReviewForm = function(id) {
       const form = document.getElementById(`form-review-${id}`);
       form.style.display = form.style.display === 'block' ? 'none' : 'block';
     };
 
-    // Отправка отзыва в БД
     window.submitReview = function(itemId) {
       const rating = document.getElementById(`rating-${itemId}`).value;
       const text = document.getElementById(`comment-${itemId}`).value.trim();
@@ -460,36 +706,14 @@
         return;
       }
 
-      const reviewData = {
+      db.ref(`catalog/${itemId}/reviews`).push({
         userName: currentUserName,
         userId: currentUserId,
         rating: Number(rating),
         text: text,
         createdAt: Date.now()
-      };
-
-      db.ref(`catalog/${itemId}/reviews`).push(reviewData)
-        .then(() => {
-          alert('Дякуємо за ваш відгук!');
-        })
-        .catch(err => alert('Помилка надсилання: ' + err.message));
-    };
-
-    // Редактирование товара
-    window.editItem = function(id) {
-      db.ref('catalog/' + id).once('value').then((snapshot) => {
-        const item = snapshot.val();
-        if (!item) return;
-
-        document.getElementById('tea-name').value = item.title || '';
-        document.getElementById('tea-price').value = item.price || '';
-        document.getElementById('tea-desc').value = item.description || '';
-
-        editingItemId = id;
-        const submitBtn = document.getElementById('submit-btn');
-        if (submitBtn) submitBtn.textContent = 'Зберегти зміни';
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }).then(() => {
+        alert('Дякуємо за ваш відгук!');
       });
     };
 
@@ -498,6 +722,16 @@
       if (confirm('Ви дійсно хочете видалити цю позицію?')) {
         db.ref('catalog/' + id).remove();
       }
+    };
+
+    // Lightbox просмотр фото
+    window.openModal = function(src) {
+      document.getElementById('modal-img').src = src;
+      document.getElementById('image-modal').style.display = 'flex';
+    };
+
+    window.closeModal = function() {
+      document.getElementById('image-modal').style.display = 'none';
     };
   </script>
 </body>
