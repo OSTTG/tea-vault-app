@@ -1,23 +1,24 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Чайний Склад</title>
+  <title>Чайный Склад</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   
   <style>
     :root {
-      --bg-color: #18181a;
-      --card-bg: #242428;
-      --input-bg: #1e1e22;
-      --border-color: #38383e;
-      --text-color: #f3ece2;
-      --hint-color: #9e9ea8;
-      --accent-color: #e5a968;
-      --danger-color: #e55b5b;
-      --star-active: #ffb703;
-      --star-inactive: #4a4a52;
+      --bg-color: #0d0d0e;
+      --card-bg: #161618;
+      --input-bg: #1f1f22;
+      --border-color: #2c2c30;
+      --text-color: #ededed;
+      --hint-color: #8e8e93;
+      --accent-color: #3a86ff;
+      --accent-hover: #2563eb;
+      --danger-color: #ff453a;
+      --star-active: #ffd60a;
+      --star-inactive: #2c2c30;
     }
 
     body {
@@ -29,9 +30,9 @@
       box-sizing: border-box;
     }
 
-    h2 { margin-top: 0; color: var(--accent-color); font-size: 20px; font-weight: 700; }
+    h2 { margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 700; }
     .form-group { margin-bottom: 14px; }
-    label { display: block; font-size: 11px; color: var(--hint-color); margin-bottom: 5px; text-transform: uppercase; }
+    label { display: block; font-size: 11px; color: var(--hint-color); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 
     input, select, textarea {
       width: 100%;
@@ -46,7 +47,6 @@
     }
 
     input:focus, select:focus, textarea:focus { border-color: var(--accent-color); }
-    input[type="file"] { padding: 8px; font-size: 12px; }
 
     .rating-select {
       display: flex;
@@ -60,114 +60,26 @@
       font-size: 22px;
       color: var(--star-inactive);
       cursor: pointer;
-      transition: color 0.15s ease, transform 0.1s ease;
+      transition: color 0.15s ease;
     }
 
     .star-icon.active { color: var(--star-active); }
-    .star-icon:active { transform: scale(1.2); }
-
-    .rating-value-display {
-      margin-left: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--accent-color);
-    }
-
-    .profile-box {
-      background: var(--input-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 12px;
-    }
-
-    .slider-item { margin-bottom: 10px; }
-    .slider-item:last-child { margin-bottom: 0; }
-
-    .slider-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      margin-bottom: 4px;
-    }
-
-    input[type="range"] {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 6px;
-      border-radius: 3px;
-      background: var(--border-color);
-      outline: none;
-      padding: 0;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: var(--accent-color);
-      cursor: pointer;
-    }
-
-    .card-rating {
-      font-size: 13px;
-      color: var(--star-active);
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-
-    .card-profile-summary {
-      font-size: 12px;
-      color: var(--hint-color);
-      background: rgba(0,0,0,0.2);
-      padding: 8px 10px;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      line-height: 1.5;
-    }
 
     .btn {
       width: 100%;
       padding: 14px;
-      border-radius: 12px;
+      border-radius: 10px;
       border: none;
       background-color: var(--accent-color);
-      color: #18181a;
-      font-weight: 700;
+      color: #ffffff;
+      font-weight: 600;
       font-size: 15px;
       cursor: pointer;
       margin-top: 6px;
     }
-    .btn:active { opacity: 0.8; }
-
-    .btn-cancel {
-      background: transparent;
-      color: var(--hint-color);
-      border: 1px solid var(--border-color);
-    }
 
     .btn-edit {
-      background: rgba(229, 169, 104, 0.1);
-      color: var(--accent-color);
-      border: 1px solid rgba(229, 169, 104, 0.25);
-      padding: 8px 12px;
-      font-size: 12px;
-      cursor: pointer;
-      border-radius: 8px;
-    }
-
-    .btn-danger {
-      background: rgba(229, 91, 91, 0.15);
-      color: var(--danger-color);
-      border: 1px solid rgba(229, 91, 91, 0.3);
-      padding: 8px 12px;
-      font-size: 12px;
-      cursor: pointer;
-      border-radius: 8px;
-    }
-
-    .btn-share {
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--input-bg);
       color: var(--text-color);
       border: 1px solid var(--border-color);
       padding: 8px 12px;
@@ -176,56 +88,14 @@
       border-radius: 8px;
     }
 
-    .photo-preview-grid, .card-photo-grid {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-
-    .preview-thumb-wrapper {
-      position: relative;
-      width: 60px;
-      height: 60px;
-    }
-
-    .preview-thumb, .card-photo-thumb {
-      width: 60px;
-      height: 60px;
-      border-radius: 8px;
-      object-fit: cover;
-      border: 1px solid var(--border-color);
-      cursor: pointer;
-    }
-
-    .remove-photo-btn {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      background: var(--danger-color);
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      font-size: 12px;
-      font-weight: bold;
-      line-height: 18px;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    }
-
     .category-filters {
       display: flex;
       gap: 8px;
       overflow-x: auto;
       padding-bottom: 8px;
-      margin-top: 20px;
+      margin-top: 16px;
       margin-bottom: 12px;
-      scrollbar-width: none;
     }
-    .category-filters::-webkit-scrollbar { display: none; }
 
     .filter-chip {
       background-color: var(--card-bg);
@@ -236,21 +106,18 @@
       font-size: 12px;
       white-space: nowrap;
       cursor: pointer;
-      transition: all 0.2s ease;
     }
 
     .filter-chip.active {
-      background-color: var(--accent-color);
-      color: #18181a;
-      border-color: var(--accent-color);
+      background-color: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
       font-weight: 600;
     }
 
-    .tea-list { margin-top: 8px; }
-
     .tea-card {
       background-color: var(--card-bg);
-      border-radius: 14px;
+      border-radius: 12px;
       padding: 16px;
       margin-bottom: 14px;
       border: 1px solid var(--border-color);
@@ -263,115 +130,24 @@
       margin-bottom: 8px;
     }
 
-    .tea-title { font-size: 16px; font-weight: 700; }
-
     .badge {
-      background: #3d2b1f;
-      color: var(--accent-color);
+      background: var(--input-bg);
+      color: var(--hint-color);
       padding: 4px 10px;
-      border-radius: 8px;
+      border-radius: 6px;
       font-size: 11px;
-      font-weight: 600;
-      border: 1px solid #543c2c;
+      font-weight: 500;
+      border: 1px solid var(--border-color);
     }
 
     .notes-box {
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(255, 255, 255, 0.03);
       border-left: 3px solid var(--accent-color);
       padding: 8px 10px;
       margin-top: 8px;
       font-size: 13px;
       border-radius: 0 8px 8px 0;
-      color: #d1c9bf;
-      white-space: pre-wrap;
     }
-
-    .card-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .photo-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.92);
-      z-index: 9999;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      touch-action: none;
-    }
-
-    .photo-modal-header {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 20px;
-      box-sizing: border-box;
-      color: var(--text-color);
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .close-modal-btn {
-      background: rgba(255, 255, 255, 0.15);
-      color: #fff;
-      border: none;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      font-size: 18px;
-      cursor: pointer;
-    }
-
-    .photo-modal-body {
-      flex: 1;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .photo-modal-img {
-      max-width: 95%;
-      max-height: 80vh;
-      object-fit: contain;
-      border-radius: 8px;
-      transition: transform 0.15s ease-out;
-    }
-
-    .modal-arrow {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      border: 1px solid var(--border-color);
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      font-size: 18px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-      z-index: 10;
-    }
-
-    .modal-arrow.left { left: 10px; }
-    .modal-arrow.right { right: 10px; }
 
     .bottom-nav {
       position: fixed;
@@ -379,7 +155,7 @@
       left: 0;
       right: 0;
       height: 60px;
-      background-color: #1e1e22;
+      background-color: #121214;
       display: flex;
       justify-content: space-around;
       align-items: center;
@@ -397,259 +173,151 @@
       font-size: 11px;
       cursor: pointer;
       width: 50%;
-      padding: 6px 0;
     }
 
     .nav-btn.active {
-      color: var(--accent-color);
+      color: var(--text-color);
       font-weight: bold;
     }
 
-    .nav-btn .nav-icon {
-      font-size: 18px;
-      margin-bottom: 2px;
-    }
-
     .review-item {
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--input-bg);
       border-radius: 8px;
       padding: 10px;
       margin-top: 8px;
       border: 1px solid var(--border-color);
     }
-    .review-author {
-      font-size: 12px;
-      font-weight: bold;
-      color: var(--accent-color);
-      display: flex;
-      justify-content: space-between;
-    }
-    .review-text {
-      font-size: 12px;
-      color: var(--text-color);
-      margin-top: 4px;
-    }
-    .review-form-box {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px dashed var(--border-color);
+    
+    .card-photo-thumb {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border-color);
     }
   </style>
 </head>
 <body>
 
+  <!-- ВКЛАДКА: МОЯ КОЛЛЕКЦИЯ -->
   <div id="tabMyCollection">
-    <h2>🍵 Чайний Склад</h2>
+    <h2>☕ Личная коллекция</h2>
 
     <div class="form-group">
-      <label>Назва чаю</label>
-      <input type="text" id="teaName" placeholder="наприклад: Да Хун Пао">
+      <label>Название чая</label>
+      <input type="text" id="teaName" placeholder="например: Да Хун Пао">
     </div>
 
     <div style="display: flex; gap: 10px;">
       <div class="form-group" style="flex: 1;">
-        <label>Рік</label>
+        <label>Год</label>
         <input type="number" id="teaYear" value="2024">
       </div>
       <div class="form-group" style="flex: 1;">
-        <label>Категорія</label>
+        <label>Категория</label>
         <select id="teaCategory">
-          <option value="Шу Пуер">Шу Пуер</option>
-          <option value="Шен Пуер">Шен Пуер</option>
+          <option value="Шу Пуэр">Шу Пуэр</option>
+          <option value="Шен Пуер">Шен Пуэр</option>
           <option value="Улун">Улун</option>
-          <option value="Червоний чай">Червоний чай</option>
-          <option value="Зелений чай">Зелений чай</option>
-          <option value="Білий чай">Білий чай</option>
-          <option value="Жовтий чай">Жовтий чай</option>
-          <option value="Хей Ча (Чорний)">Хей Ча (Чорний)</option>
-          <option value="Я Бао (Бруньки)">Я Бао (Бруньки)</option>
+          <option value="Красный чай">Красный чай</option>
+          <option value="Зелёный чай">Зелёный чай</option>
+          <option value="Белый чай">Белый чай</option>
         </select>
       </div>
     </div>
 
     <div class="form-group">
-      <label>Загальна оцінка</label>
+      <label>Оценка</label>
       <div class="rating-select" id="ratingSelect"></div>
     </div>
 
     <div class="form-group">
-      <label>📊 Вкусовий профіль та Ча Ци</label>
-      <div class="profile-box">
-        <div class="slider-item">
-          <div class="slider-header"><span>🟧 Щільність (Тіло):</span><b id="valBody">3/5</b></div>
-          <input type="range" id="sliderBody" min="1" max="5" value="3" oninput="document.getElementById('valBody').innerText = this.value + '/5'">
-        </div>
-        <div class="slider-item">
-          <div class="slider-header"><span>🟫 Обсмажка (Хуо Хо):</span><b id="valRoast">3/5</b></div>
-          <input type="range" id="sliderRoast" min="1" max="5" value="3" oninput="document.getElementById('valRoast').innerText = this.value + '/5'">
-        </div>
-        <div class="slider-item">
-          <div class="slider-header"><span>🌸 Квітковість / Аромат:</span><b id="valFloral">3/5</b></div>
-          <input type="range" id="sliderFloral" min="1" max="5" value="3" oninput="document.getElementById('valFloral').innerText = this.value + '/5'">
-        </div>
-        <div class="slider-item">
-          <div class="slider-header"><span>🍯 Солодкість:</span><b id="valSweet">3/5</b></div>
-          <input type="range" id="sliderSweet" min="1" max="5" value="3" oninput="document.getElementById('valSweet').innerText = this.value + '/5'">
-        </div>
-
-        <div style="margin-top: 10px;">
-          <label style="font-size: 10px; margin-bottom: 3px;">💨 Чайний стан (Ча Ци)</label>
-          <select id="teaState">
-            <option value="🧘‍♂️ Умиротворення / Медитативне">🧘‍♂️ Умиротворення / Медитативне</option>
-            <option value="⚡️ Бадьорість / Тонус">⚡️ Бадьорість / Тонус</option>
-            <option value="🧠 Глибокий фокус / Ясність">🧠 Глибокий фокус / Ясність</option>
-            <option value="🛋 Затишок / Релакс">🛋 Затишок / Релакс</option>
-            <option value="✨ Легкість / Сонячний настрій">✨ Легкість / Сонячний настрій</option>
-          </select>
-        </div>
-      </div>
+      <label>Заметки / Впечатления</label>
+      <textarea id="teaNotes" rows="3" placeholder="Опиши вкус, аромат, проливы..."></textarea>
     </div>
 
-    <div class="form-group">
-      <label>Фотографії (до 6 шт)</label>
-      <input type="file" id="teaPhotos" accept="image/*" multiple>
-      <div class="photo-preview-grid" id="previewGrid"></div>
-    </div>
+    <button class="btn" onclick="savePersonalTea()">Добавить в личную коллекцию</button>
 
-    <div class="form-group">
-      <label>Враження після чаювання</label>
-      <textarea id="teaNotes" rows="3" placeholder="Опиши смак, аромат, посуд..."></textarea>
-    </div>
-
-    <button class="btn" id="saveBtn" onclick="saveTeaHandler()">Додати до колекції</button>
-    <button class="btn btn-cancel" id="cancelBtn" onclick="resetForm()" style="display: none; margin-top: 6px;">Скасувати редагування</button>
-
-    <div class="category-filters" id="categoryFilters"></div>
-    <div class="tea-list" id="teaList"></div>
+    <div class="tea-list" id="teaList" style="margin-top: 20px;"></div>
   </div>
 
+  <!-- ВКЛАДКА: ОБЩИЙ КАТАЛОГ -->
   <div id="tabCatalog" style="display: none;">
-    <h2>⭐ Каталог та Відгуки спільноти</h2>
-    <p style="font-size: 12px; color: var(--hint-color); margin-top: -8px;">Тут зібрані чаї для спільного оцінювання та обговорення.</p>
+    <h2>⭐ Общий Каталог</h2>
 
-    <!-- Панель админа -->
-    <div id="adminCatalogForm" style="display: none; background: var(--card-bg); padding: 14px; border-radius: 12px; border: 1px dashed var(--accent-color); margin-bottom: 16px;">
-      <h3 style="margin-top: 0; font-size: 15px; color: var(--accent-color);">👑 Панель Адміна: Додати чай у каталог</h3>
-      
+    <!-- Форма администратора (скрыта по умолчанию, открывается если ты Админ) -->
+    <div id="adminCatalogForm" style="display: none; background: var(--card-bg); padding: 14px; border-radius: 12px; border: 1px solid var(--accent-color); margin-bottom: 16px;">
+      <h3 style="margin-top: 0; font-size: 15px; color: var(--accent-color);">Панель Администратора</h3>
       <div class="form-group">
-        <label>Назва чаю</label>
-        <input type="text" id="catTeaName" placeholder="наприклад: 7562 Менхай 2018">
-      </div>
-      <div style="display: flex; gap: 10px;">
-        <div class="form-group" style="flex: 1;">
-          <label>Рік</label>
-          <input type="number" id="catTeaYear" value="2024">
-        </div>
-        <div class="form-group" style="flex: 1;">
-          <label>Категорія</label>
-          <select id="catTeaCategory">
-            <option value="Шу Пуер">Шу Пуер</option>
-            <option value="Шен Пуер">Шен Пуер</option>
-            <option value="Улун">Улун</option>
-            <option value="Червоний чай">Червоний чай</option>
-            <option value="Зелений чай">Зелений чай</option>
-            <option value="Білий чай">Білий чай</option>
-            <option value="Жовтий чай">Жовтий чай</option>
-            <option value="Хей Ча (Чорний)">Хей Ча (Чорний)</option>
-            <option value="Я Бао (Бруньки)">Я Бао (Бруньки)</option>
-          </select>
-        </div>
+        <label>Название товара</label>
+        <input type="text" id="catTeaName" placeholder="Название чая">
       </div>
       <div class="form-group">
-        <label>Фотографії чаю</label>
-        <input type="file" id="catTeaPhotos" accept="image/*" multiple>
-        <div class="photo-preview-grid" id="catPreviewGrid"></div>
+        <label>Ссылка на фото (URL)</label>
+        <input type="text" id="catTeaPhoto" placeholder="https://...">
       </div>
       <div class="form-group">
-        <label>Опис для каталогу</label>
-        <textarea id="catTeaNotes" rows="2" placeholder="Опис чаю від адміна..."></textarea>
+        <label>Категория</label>
+        <select id="catTeaCategory">
+          <option value="Шу Пуэр">Шу Пуэр</option>
+          <option value="Шен Пуер">Шен Пуэр</option>
+          <option value="Улун">Улун</option>
+          <option value="Красный чай">Красный чай</option>
+          <option value="Зелёный чай">Зелёный чай</option>
+        </select>
       </div>
-      <button class="btn" onclick="addCatalogTeaByAdmin()">Опублікувати в каталог</button>
+      <button class="btn" onclick="addCatalogTeaByAdmin()">Опубликовать для всех</button>
     </div>
 
-    <div class="category-filters" id="catalogCategoryFilters"></div>
     <div class="tea-list" id="catalogList"></div>
   </div>
 
+  <!-- НАВИГАЦИЯ -->
   <nav class="bottom-nav">
     <button class="nav-btn active" id="btnTabMy" onclick="switchTab('my')">
-      <span class="nav-icon">🍃</span>
-      <span>Мій чай</span>
+      <span>🍃 Личный</span>
     </button>
     <button class="nav-btn" id="btnTabCatalog" onclick="switchTab('catalog')">
-      <span class="nav-icon">⭐</span>
-      <span>Каталог та Відгуки</span>
+      <span>⭐ Общий Каталог</span>
     </button>
   </nav>
-
-  <div class="photo-modal" id="photoModal">
-    <div class="photo-modal-header">
-      <span id="modalCounter">1 / 1</span>
-      <button class="close-modal-btn" onclick="closeGallery()">✕</button>
-    </div>
-    <div class="photo-modal-body" id="modalBody">
-      <div class="modal-arrow left" id="arrowLeft" onclick="prevPhoto(event)">❮</div>
-      <img src="" class="photo-modal-img" id="modalImg">
-      <div class="modal-arrow right" id="arrowRight" onclick="nextPhoto(event)">❯</div>
-    </div>
-  </div>
 
   <script>
     const tg = window.Telegram?.WebApp || {};
     if (tg.ready) tg.ready();
-    if (tg.expand) tg.expand();
 
-    // Вкажи тут свій Telegram ID
-    const ADMIN_TELEGRAM_ID = 123456789; 
-
-    const categoriesList = [
-      "Шу Пуер", "Шен Пуер", "Улун", 
-      "Червоний чай", "Зелений чай", "Білий чай", 
-      "Жовтий чай", "Хей Ча (Чорний)", "Я Бао (Бруньки)"
-    ];
+    // 🔴 ВНИМАНИЕ: Замени 0 на свой реальный ID Telegram (число)
+    const ADMIN_TELEGRAM_ID = 770549804; 
 
     let teas = [];
     let catalogTeas = [];
-    let currentPhotosBase64 = [];
-    let currentCatPhotosBase64 = [];
     let currentRating = 8;
-    let editingId = null;
-    let selectedCategory = "Все";
-    let selectedCatalogCategory = "Все";
 
-    // Галерея
-    let activeGalleryPhotos = [];
-    let activePhotoIndex = 0;
-    let touchStartX = 0;
-
-    function switchTab(tab) {
-      const myTab = document.getElementById('tabMyCollection');
-      const catTab = document.getElementById('tabCatalog');
-      const btnMy = document.getElementById('btnTabMy');
-      const btnCat = document.getElementById('btnTabCatalog');
-
-      if (tab === 'my') {
-        myTab.style.display = 'block';
-        catTab.style.display = 'none';
-        btnMy.classList.add('active');
-        btnCat.classList.remove('active');
-      } else {
-        myTab.style.display = 'none';
-        catTab.style.display = 'block';
-        btnMy.classList.remove('active');
-        btnCat.classList.add('active');
-        renderCatalog();
-      }
+    // Проверка прав администратора
+    function checkIsAdmin() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isParamAdmin = urlParams.get('admin') === 'true';
+      const isIdAdmin = tg.initDataUnsafe?.user?.id === ADMIN_TELEGRAM_ID;
+      
+      return isParamAdmin || isIdAdmin;
     }
 
-    function checkAdminStatus() {
-      const user = tg.initDataUnsafe?.user;
-      const urlParams = new URLSearchParams(window.location.search);
-      const isAdminByUrl = urlParams.get('admin') === 'true';
-
-      if ((user && user.id === ADMIN_TELEGRAM_ID) || isAdminByUrl) {
-        document.getElementById('adminCatalogForm').style.display = 'block';
+    function initApp() {
+      if (checkIsAdmin()) {
+        const adminForm = document.getElementById('adminCatalogForm');
+        if (adminForm) adminForm.style.display = 'block';
       }
+      initRatingStars();
+      renderPersonalTeas();
+      renderCatalog();
+    }
+
+    function switchTab(tab) {
+      document.getElementById('tabMyCollection').style.display = tab === 'my' ? 'block' : 'none';
+      document.getElementById('tabCatalog').style.display = tab === 'catalog' ? 'block' : 'none';
+      document.getElementById('btnTabMy').classList.toggle('active', tab === 'my');
+      document.getElementById('btnTabCatalog').classList.toggle('active', tab === 'catalog');
     }
 
     function initRatingStars() {
@@ -658,579 +326,129 @@
       for (let i = 1; i <= 10; i++) {
         container.innerHTML += `<span class="star-icon ${i <= currentRating ? 'active' : ''}" onclick="setRating(${i})">★</span>`;
       }
-      container.innerHTML += `<span class="rating-value-display" id="ratingValueDisplay">${currentRating} з 10</span>`;
     }
 
     function setRating(val) {
       currentRating = val;
-      const stars = document.querySelectorAll('#ratingSelect .star-icon');
-      stars.forEach((star, index) => {
-        if (index < val) {
-          star.classList.add('active');
-        } else {
-          star.classList.remove('active');
-        }
-      });
-      document.getElementById('ratingValueDisplay').innerText = `${val} з 10`;
-    }
-
-    function makeBar(val) {
-      const filled = '▮'.repeat(val);
-      const empty = '▯'.repeat(5 - val);
-      return `${filled}${empty} (${val}/5)`;
-    }
-
-    function loadTeas() {
-      const localData = localStorage.getItem('my_teas_v9');
-      if (localData) {
-        try { teas = JSON.parse(localData); } catch(e) {}
-      }
-
-      const localCatalog = localStorage.getItem('catalog_teas_v9');
-      if (localCatalog) {
-        try { catalogTeas = JSON.parse(localCatalog); } catch(e) {}
-      } else {
-        catalogTeas = [
-          {
-            id: 101,
-            name: "7562 Менхай",
-            category: "Шу Пуер",
-            year: 2018,
-            notes: "Класична рецептура Шу Пуера.",
-            photos: [],
-            reviews: []
-          }
-        ];
-      }
-
       initRatingStars();
-      renderTeas();
-      checkAdminStatus();
     }
 
-    function saveTeasToStorage() {
-      localStorage.setItem('my_teas_v9', JSON.stringify(teas));
-    }
+    function savePersonalTea() {
+      const name = document.getElementById('teaName').value.trim();
+      if (!name) return alert('Введите название!');
 
-    function saveCatalogToStorage() {
-      localStorage.setItem('catalog_teas_v9', JSON.stringify(catalogTeas));
-    }
-
-    document.getElementById('teaPhotos').addEventListener('change', function(e) {
-      handleImageUpload(e.target.files, currentPhotosBase64, () => renderPreviewGrid('previewGrid', currentPhotosBase64, removePhoto));
-      this.value = '';
-    });
-
-    document.getElementById('catTeaPhotos').addEventListener('change', function(e) {
-      handleImageUpload(e.target.files, currentCatPhotosBase64, () => renderPreviewGrid('catPreviewGrid', currentCatPhotosBase64, removeCatPhoto));
-      this.value = '';
-    });
-
-    function handleImageUpload(filesArray, targetArray, callback) {
-      const files = Array.from(filesArray);
-      const availableSlots = 6 - targetArray.length;
-
-      if (availableSlots <= 0) {
-        alert('Максимум 6 фотографій!');
-        return;
-      }
-
-      files.slice(0, availableSlots).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          const img = new Image();
-          img.src = event.target.result;
-          img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1200;
-            const scaleFactor = Math.min(1, MAX_WIDTH / img.width);
-            canvas.width = img.width * scaleFactor;
-            canvas.height = img.height * scaleFactor;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            
-            const base64 = canvas.toDataURL('image/jpeg', 0.8);
-            targetArray.push(base64);
-            callback();
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function renderPreviewGrid(containerId, arrayRef, removeFn) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = '';
-      arrayRef.forEach((photoBase64, index) => {
-        container.innerHTML += `
-          <div class="preview-thumb-wrapper">
-            <img src="${photoBase64}" class="preview-thumb" onclick="openGalleryCustom(${containerId === 'previewGrid' ? 'currentPhotosBase64' : 'currentCatPhotosBase64'}, ${index})">
-            <button type="button" class="remove-photo-btn" onclick="${removeFn.name}(${index})">×</button>
-          </div>
-        `;
-      });
-    }
-
-    function removePhoto(index) {
-      currentPhotosBase64.splice(index, 1);
-      renderPreviewGrid('previewGrid', currentPhotosBase64, removePhoto);
-    }
-
-    function removeCatPhoto(index) {
-      currentCatPhotosBase64.splice(index, 1);
-      renderPreviewGrid('catPreviewGrid', currentCatPhotosBase64, removeCatPhoto);
-    }
-
-    function renderFilters() {
-      const filtersContainer = document.getElementById('categoryFilters');
-      filtersContainer.innerHTML = '';
-
-      const allCount = teas.length;
-      const allActive = selectedCategory === "Все" ? "active" : "";
-      filtersContainer.innerHTML += `<div class="filter-chip ${allActive}" onclick="setFilter('Все')">Все (${allCount})</div>`;
-
-      categoriesList.forEach(cat => {
-        const count = teas.filter(t => t.category === cat).length;
-        if (count > 0 || selectedCategory === cat) {
-          const activeClass = selectedCategory === cat ? "active" : "";
-          filtersContainer.innerHTML += `<div class="filter-chip ${activeClass}" onclick="setFilter('${cat}')">${cat} (${count})</div>`;
-        }
-      });
-    }
-
-    function setFilter(cat) {
-      selectedCategory = cat;
-      renderTeas();
-    }
-
-    function renderTeas() {
-      renderFilters();
-      const list = document.getElementById('teaList');
-      list.innerHTML = '';
-
-      const filteredTeas = selectedCategory === "Все" 
-        ? teas 
-        : teas.filter(t => t.category === selectedCategory);
-
-      if (filteredTeas.length === 0) {
-        list.innerHTML = `<p style="text-align: center; color: var(--hint-color); font-size: 13px; margin-top: 30px;">Колекція порожня</p>`;
-        return;
-      }
-
-      filteredTeas.forEach((tea) => {
-        const photoList = tea.photos || [];
-        let galleryHtml = '';
-        if (photoList.length > 0) {
-          galleryHtml = `<div class="card-photo-grid">` + 
-            photoList.map((p, idx) => `<img src="${p}" class="card-photo-thumb" onclick="openTeaGallery(${tea.id}, ${idx})">`).join('') + 
-            `</div>`;
-        }
-
-        const prof = tea.profile || { body: 3, roast: 3, floral: 3, sweet: 3, state: '🧘‍♂️ Умиротворення' };
-
-        list.innerHTML += `
-          <div class="tea-card">
-            <div class="card-header">
-              <span class="tea-title">${tea.name} (${tea.year})</span>
-              <span class="badge">${tea.category}</span>
-            </div>
-            <div class="card-rating">⭐️ Оцінка: ${tea.rating || 8} з 10</div>
-            
-            <div class="card-profile-summary">
-              🟧 Щільність: ${makeBar(prof.body)}<br>
-              🟫 Обсмажка: ${makeBar(prof.roast)}<br>
-              🌸 Аромат: ${makeBar(prof.floral)}<br>
-              🍯 Солодкість: ${makeBar(prof.sweet)}<br>
-              💨 Стан: ${prof.state}
-            </div>
-
-            ${galleryHtml}
-            <div class="notes-box">${tea.notes || 'Без опису'}</div>
-            <div class="card-actions">
-              <button class="btn btn-share" onclick="shareTea(${tea.id})">✈️ Поділитися</button>
-              <button class="btn btn-edit" onclick="editTea(${tea.id})">✏️ Редагувати</button>
-              <button class="btn btn-danger" onclick="deleteTea(${tea.id})">🗑 Видалити</button>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    function addCatalogTeaByAdmin() {
-      const name = document.getElementById('catTeaName').value.trim();
-      const year = document.getElementById('catTeaYear').value;
-      const category = document.getElementById('catTeaCategory').value;
-      const notes = document.getElementById('catTeaNotes').value.trim();
-
-      if (!name) return alert('Введи назву чаю!');
-
-      const newCatalogItem = {
+      const newTea = {
         id: Date.now(),
         name,
-        year,
-        category,
-        notes,
-        photos: [...currentCatPhotosBase64],
+        year: document.getElementById('teaYear').value,
+        category: document.getElementById('teaCategory').value,
+        rating: currentRating,
+        notes: document.getElementById('teaNotes').value.trim()
+      };
+
+      teas.unshift(newTea);
+      localStorage.setItem('my_private_teas', JSON.stringify(teas));
+      document.getElementById('teaName').value = '';
+      document.getElementById('teaNotes').value = '';
+      renderPersonalTeas();
+    }
+
+    function renderPersonalTeas() {
+      const list = document.getElementById('teaList');
+      list.innerHTML = teas.map(tea => `
+        <div class="tea-card">
+          <div class="card-header">
+            <b>${tea.name} (${tea.year})</b>
+            <span class="badge">${tea.category}</span>
+          </div>
+          <div style="font-size: 13px; color: var(--star-active);">★ ${tea.rating}/10</div>
+          <div class="notes-box">${tea.notes || 'Без описания'}</div>
+        </div>
+      `).join('');
+    }
+
+    // Публикация товара админом
+    function addCatalogTeaByAdmin() {
+      const name = document.getElementById('catTeaName').value.trim();
+      const photo = document.getElementById('catTeaPhoto').value.trim();
+      if (!name) return alert('Введите название!');
+
+      const newItem = {
+        id: Date.now(),
+        name,
+        photo,
+        category: document.getElementById('catTeaCategory').value,
         reviews: []
       };
 
-      catalogTeas.unshift(newCatalogItem);
-      saveCatalogToStorage();
-
-      document.getElementById('catTeaName').value = '';
-      document.getElementById('catTeaNotes').value = '';
-      currentCatPhotosBase64 = [];
-      renderPreviewGrid('catPreviewGrid', currentCatPhotosBase64, removeCatPhoto);
-
+      // Отправляем данные боту Telegram для общего доступа
       if (tg.sendData) {
-        tg.sendData(JSON.stringify({ action: "ADMIN_ADD_TEA", tea: newCatalogItem }));
+        tg.sendData(JSON.stringify({ action: "ADD_PRODUCT", item: newItem }));
+      } else {
+        alert('Данные отправлены боту.');
       }
-
-      renderCatalog();
     }
 
-    function renderCatalogFilters() {
-      const filtersContainer = document.getElementById('catalogCategoryFilters');
-      filtersContainer.innerHTML = '';
+    // Добавление отзыва пользователем
+    function addReview(teaId) {
+      const input = document.getElementById(`rev_${teaId}`);
+      const text = input.value.trim();
+      if (!text) return;
 
-      const allCount = catalogTeas.length;
-      const allActive = selectedCatalogCategory === "Все" ? "active" : "";
-      filtersContainer.innerHTML += `<div class="filter-chip ${allActive}" onclick="setCatalogFilter('Все')">Все (${allCount})</div>`;
+      const userName = tg.initDataUnsafe?.user?.first_name || 'Пользователь';
+      const reviewPayload = {
+        action: "ADD_REVIEW",
+        teaId: teaId,
+        review: { user: userName, text: text }
+      };
 
-      categoriesList.forEach(cat => {
-        const count = catalogTeas.filter(t => t.category === cat).length;
-        if (count > 0 || selectedCatalogCategory === cat) {
-          const activeClass = selectedCatalogCategory === cat ? "active" : "";
-          filtersContainer.innerHTML += `<div class="filter-chip ${activeClass}" onclick="setCatalogFilter('${cat}')">${cat} (${count})</div>`;
-        }
-      });
-    }
-
-    function setCatalogFilter(cat) {
-      selectedCatalogCategory = cat;
-      renderCatalog();
+      // Передаём отзыв боту, чтобы он расслал/сохранил его для остальных
+      if (tg.sendData) {
+        tg.sendData(JSON.stringify(reviewPayload));
+        input.value = '';
+        alert('Отзыв отправлен!');
+      } else {
+        alert(' Ошибка отправки Telegram.');
+      }
     }
 
     function renderCatalog() {
-      renderCatalogFilters();
       const list = document.getElementById('catalogList');
-      list.innerHTML = '';
-
-      const filteredCatalog = selectedCatalogCategory === "Все"
-        ? catalogTeas
-        : catalogTeas.filter(t => t.category === selectedCatalogCategory);
-
-      if (filteredCatalog.length === 0) {
-        list.innerHTML = `<p style="text-align: center; color: var(--hint-color); font-size: 13px;">Каталог порожній</p>`;
+      if (catalogTeas.length === 0) {
+        list.innerHTML = '<div style="color: var(--hint-color); font-size: 13px; text-align: center; margin-top: 20px;">Каталог пуст</div>';
         return;
       }
 
-      filteredCatalog.forEach(tea => {
-        const revs = tea.reviews || [];
-        let avgRating = 'Немає оцінок';
-        if (revs.length > 0) {
-          const sum = revs.reduce((acc, r) => acc + r.rating, 0);
-          avgRating = (sum / revs.length).toFixed(1) + ' / 10 (' + revs.length + ' відгуків)';
-        }
-
-        const photoList = tea.photos || [];
-        let galleryHtml = '';
-        if (photoList.length > 0) {
-          galleryHtml = `<div class="card-photo-grid">` + 
-            photoList.map((p, idx) => `<img src="${p}" class="card-photo-thumb" onclick="openCatalogGallery(${tea.id}, ${idx})">`).join('') + 
-            `</div>`;
-        }
-
-        let reviewsHtml = revs.map(r => `
-          <div class="review-item">
-            <div class="review-author">
-              <span>👤 ${r.userName}</span>
-              <span>⭐️ ${r.rating}/10</span>
-            </div>
-            <div class="review-text">${r.text}</div>
+      list.innerHTML = catalogTeas.map(tea => `
+        <div class="tea-card">
+          ${tea.photo ? `<img src="${tea.photo}" class="card-photo-thumb" />` : ''}
+          <div class="card-header">
+            <b>${tea.name}</b>
+            <span class="badge">${tea.category}</span>
           </div>
-        `).join('');
-
-        list.innerHTML += `
-          <div class="tea-card">
-            <div class="card-header">
-              <span class="tea-title">${tea.name} (${tea.year})</span>
-              <span class="badge">${tea.category}</span>
-            </div>
-            <div class="card-rating">⭐️ Середня оцінка: ${avgRating}</div>
-            ${galleryHtml}
-            <div class="notes-box">${tea.notes || 'Опис відсутній'}</div>
-
-            <div style="margin-top: 10px;">
-              <b style="font-size: 13px;">💬 Відгуки спільноти:</b>
-              ${reviewsHtml || '<p style="font-size: 12px; color: var(--hint-color); margin-top: 4px;">Поки немає відгуків. Будь першим!</p>'}
-            </div>
-
-            <div class="review-form-box">
-              <label>Написати свій відгук:</label>
-              <div style="display: flex; gap: 8px; margin-bottom: 6px;">
-                <input type="number" id="revRating_${tea.id}" min="1" max="10" value="9" style="width: 75px;" placeholder="Оцінка">
-                <input type="text" id="revText_${tea.id}" placeholder="Твої враження про чай..." style="flex: 1;">
+          <div style="margin-top: 10px;">
+            <b style="font-size: 12px; color: var(--hint-color);">Отзывы:</b>
+            ${(tea.reviews || []).map(r => `
+              <div class="review-item">
+                <b style="font-size: 12px;">${r.user}:</b>
+                <span style="font-size: 13px;">${r.text}</span>
               </div>
-              <button class="btn btn-edit" onclick="addReview(${tea.id})" style="width: 100%;">Надіслати відгук</button>
-            </div>
+            `).join('') || '<div style="font-size: 11px; color: var(--hint-color); margin-top: 4px;">Пока нет отзывов</div>'}
           </div>
-        `;
-      });
+          <div style="margin-top: 10px; display: flex; gap: 6px;">
+            <input type="text" id="rev_${tea.id}" placeholder="Оставить отзыв..." style="padding: 8px; font-size: 13px;">
+            <button class="btn btn-edit" onclick="addReview(${tea.id})" style="width: auto;">Отправить</button>
+          </div>
+        </div>
+      `).join('');
     }
 
-    function addReview(teaId) {
-      const ratingVal = parseInt(document.getElementById(`revRating_${teaId}`).value);
-      const textVal = document.getElementById(`revText_${teaId}`).value.trim();
+    // Загрузка локальных личных данных
+    try {
+      teas = JSON.parse(localStorage.getItem('my_private_teas')) || [];
+    } catch(e) {}
 
-      if (!textVal) return alert('Напиши декілька слів у відгуку!');
-
-      const user = tg.initDataUnsafe?.user;
-      const userName = user ? (user.first_name + (user.last_name ? ' ' + user.last_name : '')) : 'Анонім';
-
-      const tea = catalogTeas.find(t => t.id === teaId);
-      if (tea) {
-        if (!tea.reviews) tea.reviews = [];
-        const newReview = {
-          userName,
-          rating: ratingVal || 8,
-          text: textVal,
-          date: new Date().toLocaleDateString()
-        };
-        tea.reviews.push(newReview);
-        saveCatalogToStorage();
-
-        if (tg.sendData) {
-          tg.sendData(JSON.stringify({ action: "ADD_REVIEW", teaId, review: newReview }));
-        }
-
-        renderCatalog();
-      }
-    }
-
-    function openTeaGallery(teaId, index) {
-      const tea = teas.find(t => t.id === teaId);
-      if (!tea || !tea.photos || tea.photos.length === 0) return;
-      openGalleryCustom(tea.photos, index);
-    }
-
-    function openCatalogGallery(teaId, index) {
-      const tea = catalogTeas.find(t => t.id === teaId);
-      if (!tea || !tea.photos || tea.photos.length === 0) return;
-      openGalleryCustom(tea.photos, index);
-    }
-
-    function openGalleryCustom(photosArray, index) {
-      activeGalleryPhotos = photosArray;
-      activePhotoIndex = index;
-      updateModalState();
-      document.getElementById('photoModal').style.display = 'flex';
-    }
-
-    function closeGallery() {
-      document.getElementById('photoModal').style.display = 'none';
-    }
-
-    function updateModalState() {
-      const img = document.getElementById('modalImg');
-      const counter = document.getElementById('modalCounter');
-      const arrowLeft = document.getElementById('arrowLeft');
-      const arrowRight = document.getElementById('arrowRight');
-
-      img.src = activeGalleryPhotos[activePhotoIndex];
-      counter.innerText = `${activePhotoIndex + 1} / ${activeGalleryPhotos.length}`;
-
-      arrowLeft.style.display = activeGalleryPhotos.length > 1 ? 'flex' : 'none';
-      arrowRight.style.display = activeGalleryPhotos.length > 1 ? 'flex' : 'none';
-    }
-
-    function prevPhoto(e) {
-      if (e) e.stopPropagation();
-      activePhotoIndex = (activePhotoIndex - 1 + activeGalleryPhotos.length) % activeGalleryPhotos.length;
-      updateModalState();
-    }
-
-    function nextPhoto(e) {
-      if (e) e.stopPropagation();
-      activePhotoIndex = (activePhotoIndex + 1) % activeGalleryPhotos.length;
-      updateModalState();
-    }
-
-    const modalBody = document.getElementById('modalBody');
-    modalBody.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    }, false);
-
-    modalBody.addEventListener('touchend', (e) => {
-      const touchEndX = e.changedTouches[0].screenX;
-      const diff = touchEndX - touchStartX;
-      if (Math.abs(diff) > 40) {
-        if (diff < 0) nextPhoto();
-        else prevPhoto();
-      }
-    }, false);
-
-    document.getElementById('modalBody').addEventListener('click', (e) => {
-      if (e.target.id === 'modalBody' || e.target.id === 'modalImg') {
-        closeGallery();
-      }
-    });
-
-    function saveTeaHandler() {
-      const name = document.getElementById('teaName').value.trim();
-      const year = document.getElementById('teaYear').value;
-      const category = document.getElementById('teaCategory').value;
-      const notes = document.getElementById('teaNotes').value.trim();
-
-      const profile = {
-        body: parseInt(document.getElementById('sliderBody').value),
-        roast: parseInt(document.getElementById('sliderRoast').value),
-        floral: parseInt(document.getElementById('sliderFloral').value),
-        sweet: parseInt(document.getElementById('sliderSweet').value),
-        state: document.getElementById('teaState').value
-      };
-
-      if (!name) return alert('Будь ласка, введи назву чаю!');
-
-      if (editingId) {
-        const index = teas.findIndex(t => t.id === editingId);
-        if (index !== -1) {
-          teas[index] = {
-            ...teas[index],
-            name,
-            year,
-            category,
-            rating: currentRating,
-            profile,
-            photos: [...currentPhotosBase64],
-            notes
-          };
-        }
-      } else {
-        const newTea = {
-          id: Date.now(),
-          name,
-          year,
-          category,
-          rating: currentRating,
-          profile,
-          photos: [...currentPhotosBase64],
-          notes
-        };
-        teas.unshift(newTea);
-      }
-
-      saveTeasToStorage();
-      resetForm();
-      renderTeas();
-    }
-
-    function editTea(id) {
-      const tea = teas.find(t => t.id === id);
-      if (!tea) return;
-
-      editingId = tea.id;
-      document.getElementById('teaName').value = tea.name;
-      document.getElementById('teaYear').value = tea.year;
-      document.getElementById('teaCategory').value = tea.category;
-      document.getElementById('teaNotes').value = tea.notes || '';
-
-      const prof = tea.profile || { body: 3, roast: 3, floral: 3, sweet: 3, state: '🧘‍♂️ Умиротворення / Медитативне' };
-      
-      document.getElementById('sliderBody').value = prof.body;
-      document.getElementById('valBody').innerText = prof.body + '/5';
-      
-      document.getElementById('sliderRoast').value = prof.roast;
-      document.getElementById('valRoast').innerText = prof.roast + '/5';
-      
-      document.getElementById('sliderFloral').value = prof.floral;
-      document.getElementById('valFloral').innerText = prof.floral + '/5';
-      
-      document.getElementById('sliderSweet').value = prof.sweet;
-      document.getElementById('valSweet').innerText = prof.sweet + '/5';
-
-      document.getElementById('teaState').value = prof.state;
-
-      setRating(tea.rating || 8);
-      currentPhotosBase64 = tea.photos ? [...tea.photos] : [];
-      renderPreviewGrid('previewGrid', currentPhotosBase64, removePhoto);
-
-      document.getElementById('saveBtn').innerText = 'Зберегти зміни';
-      document.getElementById('cancelBtn').style.display = 'block';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function deleteTea(id) {
-      if (confirm('Видалити цей чай з колекції?')) {
-        teas = teas.filter(t => t.id !== id);
-        saveTeasToStorage();
-        renderTeas();
-      }
-    }
-
-    function resetForm() {
-      editingId = null;
-      document.getElementById('teaName').value = '';
-      document.getElementById('teaYear').value = '2024';
-      document.getElementById('teaNotes').value = '';
-      
-      document.getElementById('sliderBody').value = 3;
-      document.getElementById('valBody').innerText = '3/5';
-      document.getElementById('sliderRoast').value = 3;
-      document.getElementById('valRoast').innerText = '3/5';
-      document.getElementById('sliderFloral').value = 3;
-      document.getElementById('valFloral').innerText = '3/5';
-      document.getElementById('sliderSweet').value = 3;
-      document.getElementById('valSweet').innerText = '3/5';
-
-      setRating(8);
-      currentPhotosBase64 = [];
-      renderPreviewGrid('previewGrid', currentPhotosBase64, removePhoto);
-
-      document.getElementById('saveBtn').innerText = 'Додати до колекції';
-      document.getElementById('cancelBtn').style.display = 'none';
-    }
-
-    // Починенная функция Шеринга
-    function shareTea(id) {
-      const tea = teas.find(t => t.id === id);
-      if (!tea) return;
-
-      const prof = tea.profile || { body: 3, roast: 3, floral: 3, sweet: 3, state: '🧘‍♂️ Умиротворення' };
-      const hasPhotoText = (tea.photos && tea.photos.length > 0) ? `📸 Фото: ${tea.photos.length} шт. у заварці\n` : '';
-
-      const text = `🍵 *${tea.name} (${tea.year})*\n` +
-                   `🏷 Категорія: ${tea.category}\n` +
-                   `⭐️ Оцінка: ${tea.rating || 8}/10\n` +
-                   `${hasPhotoText}\n` +
-                   `📊 *Профіль смаку:*\n` +
-                   `• Щільність: ${prof.body}/5\n` +
-                   `• Обсмажка: ${prof.roast}/5\n` +
-                   `• Аромат: ${prof.floral}/5\n` +
-                   `• Солодкість: ${prof.sweet}/5\n` +
-                   `• Стан: ${prof.state}\n\n` +
-                   `📝 *Враження:*\n${tea.notes || 'Без опису'}`;
-
-      if (tg && typeof tg.switchInlineQuery === 'function') {
-        try {
-          tg.switchInlineQuery(text);
-        } catch (e) {
-          copyToClipboard(text);
-        }
-      } else {
-        copyToClipboard(text);
-      }
-    }
-
-    function copyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        alert('Текст опису скопійовано в буфер обміну!');
-      }).catch(() => {
-        alert('Помилка копіювання.');
-      });
-    }
-
-    loadTeas();
+    initApp();
   </script>
 </body>
 </html>
