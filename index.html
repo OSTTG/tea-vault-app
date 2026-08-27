@@ -6,6 +6,9 @@
   <title>Чайний Склад</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   
+  <!-- PhotoSwipe (Модальне вікно для перегляду фото) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.3/photoswipe.min.css">
+  
   <style>
     :root {
       --bg-color: #18181a;
@@ -82,10 +85,7 @@
       padding: 12px;
     }
 
-    .slider-item {
-      margin-bottom: 10px;
-    }
-
+    .slider-item { margin-bottom: 10px; }
     .slider-item:last-child { margin-bottom: 0; }
 
     .slider-header {
@@ -201,6 +201,12 @@
       border-radius: 8px;
       object-fit: cover;
       border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+
+    .card-photo-thumb:active {
+      transform: scale(0.95);
     }
 
     .remove-photo-btn {
@@ -391,6 +397,34 @@
 
   <div class="tea-list" id="teaList"></div>
 
+  <!-- PhotoSwipe JS -->
+  <script type="module">
+    import PhotoSwipeLightbox from 'https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.3/photoswipe-lightbox.esm.min.js';
+    import PhotoSwipe from 'https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.3/photoswipe.esm.min.js';
+
+    window.openGallery = function(teaId, startIndex) {
+      const tea = teas.find(t => t.id === teaId);
+      if (!tea || !tea.photos || tea.photos.length === 0) return;
+
+      const items = tea.photos.map(src => ({
+        src: src,
+        w: 1200,
+        h: 1200
+      }));
+
+      const lightbox = new PhotoSwipeLightbox({
+        dataSource: items,
+        index: startIndex,
+        pswpModule: PhotoSwipe,
+        bgOpacity: 0.9,
+        showHideAnimationType: 'fade'
+      });
+
+      lightbox.init();
+      lightbox.loadAndOpen(startIndex);
+    };
+  </script>
+
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
@@ -429,7 +463,6 @@
       document.getElementById('ratingValueDisplay').innerText = `${val} з 10`;
     }
 
-    // Хелпер створення графічного індикатора из эмодзи-квадратов (напр. 4 -> ▮▮▮▮▯)
     function makeBar(val) {
       const filled = '▮'.repeat(val);
       const empty = '▯'.repeat(5 - val);
@@ -505,14 +538,14 @@
           img.src = event.target.result;
           img.onload = function() {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 300;
-            const scaleFactor = MAX_WIDTH / img.width;
-            canvas.width = MAX_WIDTH;
+            const MAX_WIDTH = 1200; // Підняли роздільну здатність для якісного зуму
+            const scaleFactor = Math.min(1, MAX_WIDTH / img.width);
+            canvas.width = img.width * scaleFactor;
             canvas.height = img.height * scaleFactor;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             
-            const base64 = canvas.toDataURL('image/jpeg', 0.6);
+            const base64 = canvas.toDataURL('image/jpeg', 0.8);
             currentPhotosBase64.push(base64);
             renderPreviewGrid();
           }
@@ -582,7 +615,7 @@
         let galleryHtml = '';
         if (photoList.length > 0) {
           galleryHtml = `<div class="card-photo-grid">` + 
-            photoList.map(p => `<img src="${p}" class="card-photo-thumb">`).join('') + 
+            photoList.map((p, idx) => `<img src="${p}" class="card-photo-thumb" onclick="openGallery(${tea.id}, ${idx})">`).join('') + 
             `</div>`;
         }
 
