@@ -1,12 +1,3 @@
-Принято, всё понял. В прошлый раз кнопка «Опубликовать» не срабатывала из-за того, что функция вызова завершалась с ошибкой, если не было ссылки на картинку, а загрузка файлов с устройства (галереи) была заменена на обычную текстовую ссылку (URL).
-
-Вот полностью исправленный код:
-
-1. **Загрузка фото с устройства:** Вернул кнопку выбора файлов прямо из галереи/памяти телефона (`<input type="file" accept="image/*" multiple>`) с конвертацией в Base64.
-2. **Исправлена кнопка «Опубликовать»:** Теперь всё публикуется и сохраняется локально, а также корректно отправляется боту через `tg.sendData`.
-3. **Строгий чёрный дизайн** остался без изменений.
-
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -236,7 +227,7 @@
     </div>
 
     <div class="form-group">
-      <label>Оценки</label>
+      <label>Оценка</label>
       <div class="rating-select" id="ratingSelect"></div>
     </div>
 
@@ -264,8 +255,8 @@
     <h2>⭐ Общий Каталог</h2>
 
     <!-- Форма администратора -->
-    <div id="adminCatalogForm" style="display: block; background: var(--card-bg); padding: 14px; border-radius: 12px; border: 1px solid var(--accent-color); margin-bottom: 16px;">
-      <h3 style="margin-top: 0; font-size: 15px; color: var(--accent-color);">Панель Администратора</h3>
+    <div id="adminCatalogForm" style="display: none; background: var(--card-bg); padding: 14px; border-radius: 12px; border: 1px solid var(--accent-color); margin-bottom: 16px;">
+      <h3 style="margin-top: 0; font-size: 15px; color: var(--accent-color);">👑 Панель Администратора</h3>
       <div class="form-group">
         <label>Название товара</label>
         <input type="text" id="catTeaName" placeholder="Название чая">
@@ -308,12 +299,26 @@
     const tg = window.Telegram?.WebApp || {};
     if (tg.ready) tg.ready();
 
+    // Твой Telegram ID
+    const MY_ADMIN_ID = 770549804;
+
     let teas = [];
     let catalogTeas = [];
     let currentRating = 8;
     
     let tempMyPhotos = [];
     let tempCatPhotos = [];
+
+    function checkAdminRights() {
+      const currentUserId = tg.initDataUnsafe?.user?.id;
+      const adminForm = document.getElementById('adminCatalogForm');
+      
+      if (currentUserId && Number(currentUserId) === Number(MY_ADMIN_ID)) {
+        adminForm.style.display = 'block';
+      } else {
+        adminForm.style.display = 'none';
+      }
+    }
 
     function switchTab(tab) {
       document.getElementById('tabMyCollection').style.display = tab === 'my' ? 'block' : 'none';
@@ -335,7 +340,6 @@
       initRatingStars();
     }
 
-    // Обработка фото из файла (Base64)
     function handleFileSelect(event, type) {
       const files = Array.from(event.target.files);
       const targetArr = type === 'my' ? tempMyPhotos : tempCatPhotos;
@@ -370,9 +374,8 @@
       };
 
       teas.unshift(newTea);
-      localStorage.setItem('my_private_teas_v2', JSON.stringify(teas));
+      localStorage.setItem('my_private_teas_v3', JSON.stringify(teas));
       
-      // Сброс формы
       document.getElementById('teaName').value = '';
       document.getElementById('teaNotes').value = '';
       tempMyPhotos = [];
@@ -400,7 +403,6 @@
       `).join('');
     }
 
-    // Добавление чая в каталог админом
     function addCatalogTeaByAdmin() {
       const name = document.getElementById('catTeaName').value.trim();
       if (!name) return alert('Введите название товара!');
@@ -414,14 +416,12 @@
       };
 
       catalogTeas.unshift(newItem);
-      localStorage.setItem('catalog_teas_v2', JSON.stringify(catalogTeas));
+      localStorage.setItem('catalog_teas_v3', JSON.stringify(catalogTeas));
 
-      // Отправка данных боту
       if (tg.sendData) {
         tg.sendData(JSON.stringify({ action: "ADD_PRODUCT", item: newItem }));
       }
 
-      // Сброс формы админа
       document.getElementById('catTeaName').value = '';
       tempCatPhotos = [];
       document.getElementById('catPhotoPreview').innerHTML = '';
@@ -443,7 +443,7 @@
         const revObj = { user: userName, text: text };
         item.reviews.push(revObj);
         
-        localStorage.setItem('catalog_teas_v2', JSON.stringify(catalogTeas));
+        localStorage.setItem('catalog_teas_v3', JSON.stringify(catalogTeas));
 
         if (tg.sendData) {
           tg.sendData(JSON.stringify({ action: "ADD_REVIEW", teaId: teaId, review: revObj }));
@@ -489,17 +489,15 @@
       `).join('');
     }
 
-    // Инициализация при запуске
     try {
-      teas = JSON.parse(localStorage.getItem('my_private_teas_v2')) || [];
-      catalogTeas = JSON.parse(localStorage.getItem('catalog_teas_v2')) || [];
+      teas = JSON.parse(localStorage.getItem('my_private_teas_v3')) || [];
+      catalogTeas = JSON.parse(localStorage.getItem('catalog_teas_v3')) || [];
     } catch(e) {}
 
+    checkAdminRights();
     initRatingStars();
     renderPersonalTeas();
     renderCatalog();
   </script>
 </body>
 </html>
-
-```
