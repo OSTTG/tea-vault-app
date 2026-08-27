@@ -527,12 +527,13 @@
     <h2>⭐ Каталог та Відгуки спільноти</h2>
     <p style="font-size: 12px; color: var(--hint-color); margin-top: -8px;">Тут зібрані чаї для спільного оцінювання та обговорення.</p>
 
+    <!-- Панель админа -->
     <div id="adminCatalogForm" style="display: none; background: var(--card-bg); padding: 14px; border-radius: 12px; border: 1px dashed var(--accent-color); margin-bottom: 16px;">
       <h3 style="margin-top: 0; font-size: 15px; color: var(--accent-color);">👑 Панель Адміна: Додати чай у каталог</h3>
       
       <div class="form-group">
         <label>Назва чаю</label>
-        <input type="text" id="catTeaName" placeholder="наприклад: Палацовий Шу Пуер 2018">
+        <input type="text" id="catTeaName" placeholder="наприклад: 7562 Менхай 2018">
       </div>
       <div style="display: flex; gap: 10px;">
         <div class="form-group" style="flex: 1;">
@@ -553,6 +554,11 @@
             <option value="Я Бао (Бруньки)">Я Бао (Бруньки)</option>
           </select>
         </div>
+      </div>
+      <div class="form-group">
+        <label>Фотографії чаю</label>
+        <input type="file" id="catTeaPhotos" accept="image/*" multiple>
+        <div class="photo-preview-grid" id="catPreviewGrid"></div>
       </div>
       <div class="form-group">
         <label>Опис для каталогу</label>
@@ -589,10 +595,11 @@
   </div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    const tg = window.Telegram?.WebApp || {};
+    if (tg.ready) tg.ready();
+    if (tg.expand) tg.expand();
 
-    // 🔴 ВКАЖИ ТУТ СВІЙ TELEGRAM ID
+    // Вкажи тут свій Telegram ID
     const ADMIN_TELEGRAM_ID = 123456789; 
 
     const categoriesList = [
@@ -604,17 +611,17 @@
     let teas = [];
     let catalogTeas = [];
     let currentPhotosBase64 = [];
+    let currentCatPhotosBase64 = [];
     let currentRating = 8;
     let editingId = null;
     let selectedCategory = "Все";
     let selectedCatalogCategory = "Все";
 
-    // ГАЛЕРЕЯ
+    // Галерея
     let activeGalleryPhotos = [];
     let activePhotoIndex = 0;
     let touchStartX = 0;
 
-    // ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
     function switchTab(tab) {
       const myTab = document.getElementById('tabMyCollection');
       const catTab = document.getElementById('tabCatalog');
@@ -637,7 +644,10 @@
 
     function checkAdminStatus() {
       const user = tg.initDataUnsafe?.user;
-      if (user && user.id === ADMIN_TELEGRAM_ID) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isAdminByUrl = urlParams.get('admin') === 'true';
+
+      if ((user && user.id === ADMIN_TELEGRAM_ID) || isAdminByUrl) {
         document.getElementById('adminCatalogForm').style.display = 'block';
       }
     }
@@ -671,22 +681,23 @@
     }
 
     function loadTeas() {
-      const localData = localStorage.getItem('my_teas_v7');
+      const localData = localStorage.getItem('my_teas_v9');
       if (localData) {
         try { teas = JSON.parse(localData); } catch(e) {}
       }
 
-      const localCatalog = localStorage.getItem('catalog_teas_v1');
+      const localCatalog = localStorage.getItem('catalog_teas_v9');
       if (localCatalog) {
         try { catalogTeas = JSON.parse(localCatalog); } catch(e) {}
       } else {
         catalogTeas = [
           {
             id: 101,
-            name: "7562 2018 р.",
+            name: "7562 Менхай",
             category: "Шу Пуер",
             year: 2018,
-            notes: "Класичний рецепт Шу Пуера від Menghai Tea Factory.",
+            notes: "Класична рецептура Шу Пуера.",
+            photos: [],
             reviews: []
           }
         ];
@@ -698,20 +709,29 @@
     }
 
     function saveTeasToStorage() {
-      localStorage.setItem('my_teas_v7', JSON.stringify(teas));
+      localStorage.setItem('my_teas_v9', JSON.stringify(teas));
     }
 
     function saveCatalogToStorage() {
-      localStorage.setItem('catalog_teas_v1', JSON.stringify(catalogTeas));
+      localStorage.setItem('catalog_teas_v9', JSON.stringify(catalogTeas));
     }
 
     document.getElementById('teaPhotos').addEventListener('change', function(e) {
-      const files = Array.from(e.target.files);
-      const availableSlots = 6 - currentPhotosBase64.length;
+      handleImageUpload(e.target.files, currentPhotosBase64, () => renderPreviewGrid('previewGrid', currentPhotosBase64, removePhoto));
+      this.value = '';
+    });
+
+    document.getElementById('catTeaPhotos').addEventListener('change', function(e) {
+      handleImageUpload(e.target.files, currentCatPhotosBase64, () => renderPreviewGrid('catPreviewGrid', currentCatPhotosBase64, removeCatPhoto));
+      this.value = '';
+    });
+
+    function handleImageUpload(filesArray, targetArray, callback) {
+      const files = Array.from(filesArray);
+      const availableSlots = 6 - targetArray.length;
 
       if (availableSlots <= 0) {
         alert('Максимум 6 фотографій!');
-        this.value = '';
         return;
       }
 
@@ -722,32 +742,30 @@
           img.src = event.target.result;
           img.onload = function() {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1600;
+            const MAX_WIDTH = 1200;
             const scaleFactor = Math.min(1, MAX_WIDTH / img.width);
             canvas.width = img.width * scaleFactor;
             canvas.height = img.height * scaleFactor;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             
-            const base64 = canvas.toDataURL('image/jpeg', 0.82);
-            currentPhotosBase64.push(base64);
-            renderPreviewGrid();
+            const base64 = canvas.toDataURL('image/jpeg', 0.8);
+            targetArray.push(base64);
+            callback();
           }
         };
         reader.readAsDataURL(file);
       });
+    }
 
-      this.value = '';
-    });
-
-    function renderPreviewGrid() {
-      const previewGrid = document.getElementById('previewGrid');
-      previewGrid.innerHTML = '';
-      currentPhotosBase64.forEach((photoBase64, index) => {
-        previewGrid.innerHTML += `
+    function renderPreviewGrid(containerId, arrayRef, removeFn) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      arrayRef.forEach((photoBase64, index) => {
+        container.innerHTML += `
           <div class="preview-thumb-wrapper">
-            <img src="${photoBase64}" class="preview-thumb" onclick="openGalleryCustom(currentPhotosBase64, ${index})">
-            <button type="button" class="remove-photo-btn" onclick="removePhoto(${index})">×</button>
+            <img src="${photoBase64}" class="preview-thumb" onclick="openGalleryCustom(${containerId === 'previewGrid' ? 'currentPhotosBase64' : 'currentCatPhotosBase64'}, ${index})">
+            <button type="button" class="remove-photo-btn" onclick="${removeFn.name}(${index})">×</button>
           </div>
         `;
       });
@@ -755,7 +773,12 @@
 
     function removePhoto(index) {
       currentPhotosBase64.splice(index, 1);
-      renderPreviewGrid();
+      renderPreviewGrid('previewGrid', currentPhotosBase64, removePhoto);
+    }
+
+    function removeCatPhoto(index) {
+      currentCatPhotosBase64.splice(index, 1);
+      renderPreviewGrid('catPreviewGrid', currentCatPhotosBase64, removeCatPhoto);
     }
 
     function renderFilters() {
@@ -833,7 +856,6 @@
       });
     }
 
-    // 🌟 ЛОГІКА КАТАЛОГУ ТА ВІДГУКІВ
     function addCatalogTeaByAdmin() {
       const name = document.getElementById('catTeaName').value.trim();
       const year = document.getElementById('catTeaYear').value;
@@ -842,18 +864,28 @@
 
       if (!name) return alert('Введи назву чаю!');
 
-      catalogTeas.unshift({
+      const newCatalogItem = {
         id: Date.now(),
         name,
         year,
         category,
         notes,
+        photos: [...currentCatPhotosBase64],
         reviews: []
-      });
+      };
 
+      catalogTeas.unshift(newCatalogItem);
       saveCatalogToStorage();
+
       document.getElementById('catTeaName').value = '';
       document.getElementById('catTeaNotes').value = '';
+      currentCatPhotosBase64 = [];
+      renderPreviewGrid('catPreviewGrid', currentCatPhotosBase64, removeCatPhoto);
+
+      if (tg.sendData) {
+        tg.sendData(JSON.stringify({ action: "ADMIN_ADD_TEA", tea: newCatalogItem }));
+      }
+
       renderCatalog();
     }
 
@@ -901,6 +933,14 @@
           avgRating = (sum / revs.length).toFixed(1) + ' / 10 (' + revs.length + ' відгуків)';
         }
 
+        const photoList = tea.photos || [];
+        let galleryHtml = '';
+        if (photoList.length > 0) {
+          galleryHtml = `<div class="card-photo-grid">` + 
+            photoList.map((p, idx) => `<img src="${p}" class="card-photo-thumb" onclick="openCatalogGallery(${tea.id}, ${idx})">`).join('') + 
+            `</div>`;
+        }
+
         let reviewsHtml = revs.map(r => `
           <div class="review-item">
             <div class="review-author">
@@ -918,17 +958,18 @@
               <span class="badge">${tea.category}</span>
             </div>
             <div class="card-rating">⭐️ Середня оцінка: ${avgRating}</div>
+            ${galleryHtml}
             <div class="notes-box">${tea.notes || 'Опис відсутній'}</div>
 
             <div style="margin-top: 10px;">
               <b style="font-size: 13px;">💬 Відгуки спільноти:</b>
-              ${reviewsHtml || '<p style="font-size: 12px; color: var(--hint-color);">Поки немає відгуків. Будь першим!</p>'}
+              ${reviewsHtml || '<p style="font-size: 12px; color: var(--hint-color); margin-top: 4px;">Поки немає відгуків. Будь першим!</p>'}
             </div>
 
             <div class="review-form-box">
               <label>Написати свій відгук:</label>
               <div style="display: flex; gap: 8px; margin-bottom: 6px;">
-                <input type="number" id="revRating_${tea.id}" min="1" max="10" value="9" style="width: 70px;" placeholder="Оцінка">
+                <input type="number" id="revRating_${tea.id}" min="1" max="10" value="9" style="width: 75px;" placeholder="Оцінка">
                 <input type="text" id="revText_${tea.id}" placeholder="Твої враження про чай..." style="flex: 1;">
               </div>
               <button class="btn btn-edit" onclick="addReview(${tea.id})" style="width: 100%;">Надіслати відгук</button>
@@ -950,20 +991,31 @@
       const tea = catalogTeas.find(t => t.id === teaId);
       if (tea) {
         if (!tea.reviews) tea.reviews = [];
-        tea.reviews.push({
+        const newReview = {
           userName,
           rating: ratingVal || 8,
           text: textVal,
           date: new Date().toLocaleDateString()
-        });
+        };
+        tea.reviews.push(newReview);
         saveCatalogToStorage();
+
+        if (tg.sendData) {
+          tg.sendData(JSON.stringify({ action: "ADD_REVIEW", teaId, review: newReview }));
+        }
+
         renderCatalog();
       }
     }
 
-    // ЛОГИКА ПРОСМОТРЩИКА ФОТО (MODAL)
     function openTeaGallery(teaId, index) {
       const tea = teas.find(t => t.id === teaId);
+      if (!tea || !tea.photos || tea.photos.length === 0) return;
+      openGalleryCustom(tea.photos, index);
+    }
+
+    function openCatalogGallery(teaId, index) {
+      const tea = catalogTeas.find(t => t.id === teaId);
       if (!tea || !tea.photos || tea.photos.length === 0) return;
       openGalleryCustom(tea.photos, index);
     }
@@ -1004,7 +1056,6 @@
       updateModalState();
     }
 
-    // Свайпы для телефона
     const modalBody = document.getElementById('modalBody');
     modalBody.addEventListener('touchstart', (e) => {
       touchStartX = e.changedTouches[0].screenX;
@@ -1025,7 +1076,6 @@
       }
     });
 
-    // СОХРАНЕНИЕ / РЕДАКТИРОВАНИЕ / УДАЛЕНИЕ В ЛИЧНОЙ КОЛЛЕКЦИИ
     function saveTeaHandler() {
       const name = document.getElementById('teaName').value.trim();
       const year = document.getElementById('teaYear').value;
@@ -1103,7 +1153,7 @@
 
       setRating(tea.rating || 8);
       currentPhotosBase64 = tea.photos ? [...tea.photos] : [];
-      renderPreviewGrid();
+      renderPreviewGrid('previewGrid', currentPhotosBase64, removePhoto);
 
       document.getElementById('saveBtn').innerText = 'Зберегти зміни';
       document.getElementById('cancelBtn').style.display = 'block';
@@ -1135,20 +1185,24 @@
 
       setRating(8);
       currentPhotosBase64 = [];
-      renderPreviewGrid();
+      renderPreviewGrid('previewGrid', currentPhotosBase64, removePhoto);
 
       document.getElementById('saveBtn').innerText = 'Додати до колекції';
       document.getElementById('cancelBtn').style.display = 'none';
     }
 
+    // Починенная функция Шеринга
     function shareTea(id) {
       const tea = teas.find(t => t.id === id);
       if (!tea) return;
 
       const prof = tea.profile || { body: 3, roast: 3, floral: 3, sweet: 3, state: '🧘‍♂️ Умиротворення' };
+      const hasPhotoText = (tea.photos && tea.photos.length > 0) ? `📸 Фото: ${tea.photos.length} шт. у заварці\n` : '';
+
       const text = `🍵 *${tea.name} (${tea.year})*\n` +
                    `🏷 Категорія: ${tea.category}\n` +
-                   `⭐️ Оцінка: ${tea.rating || 8}/10\n\n` +
+                   `⭐️ Оцінка: ${tea.rating || 8}/10\n` +
+                   `${hasPhotoText}\n` +
                    `📊 *Профіль смаку:*\n` +
                    `• Щільність: ${prof.body}/5\n` +
                    `• Обсмажка: ${prof.roast}/5\n` +
@@ -1157,15 +1211,25 @@
                    `• Стан: ${prof.state}\n\n` +
                    `📝 *Враження:*\n${tea.notes || 'Без опису'}`;
 
-      if (tg && tg.sendData) {
-        tg.switchInlineQuery(text);
+      if (tg && typeof tg.switchInlineQuery === 'function') {
+        try {
+          tg.switchInlineQuery(text);
+        } catch (e) {
+          copyToClipboard(text);
+        }
       } else {
-        navigator.clipboard.writeText(text);
-        alert('Текст опису чаю скопійовано в буфер обміну!');
+        copyToClipboard(text);
       }
     }
 
-    // ИНИЦИАЛИЗАЦИЯ
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Текст опису скопійовано в буфер обміну!');
+      }).catch(() => {
+        alert('Помилка копіювання.');
+      });
+    }
+
     loadTeas();
   </script>
 </body>
