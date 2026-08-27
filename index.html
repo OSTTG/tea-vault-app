@@ -16,6 +16,8 @@
       --hint-color: #9e9ea8;
       --accent-color: #e5a968;
       --danger-color: #e55b5b;
+      --star-active: #ffb703;
+      --star-inactive: #4a4a52;
     }
 
     body {
@@ -45,6 +47,44 @@
 
     input:focus, select:focus, textarea:focus { border-color: var(--accent-color); }
     input[type="file"] { padding: 8px; font-size: 12px; }
+
+    /* СТИЛІ РЕЙТИНГУ З ЗІРОЧКАМИ */
+    .rating-select {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      user-select: none;
+      margin-top: 4px;
+    }
+
+    .star-icon {
+      font-size: 22px;
+      color: var(--star-inactive);
+      cursor: pointer;
+      transition: color 0.15s ease, transform 0.1s ease;
+    }
+
+    .star-icon.active {
+      color: var(--star-active);
+    }
+
+    .star-icon:active {
+      transform: scale(1.2);
+    }
+
+    .rating-value-display {
+      margin-left: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-color);
+    }
+
+    .card-rating {
+      font-size: 13px;
+      color: var(--star-active);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
 
     .btn {
       width: 100%;
@@ -96,7 +136,7 @@
       border-radius: 8px;
     }
 
-    /* ПРЕВЬЮ И ИНТЕРАКТИВНОЕ УДАЛЕНИЕ ФОТО */
+    /* ПРЕВ'Ю ТА ВИДАЛЕННЯ ФОТО */
     .photo-preview-grid, .card-photo-grid {
       display: flex;
       gap: 8px;
@@ -136,7 +176,7 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
-    /* ФИЛЬТРЫ КАТЕГОРИЙ */
+    /* ФІЛЬТРИ КАТЕГОРІЙ */
     .category-filters {
       display: flex;
       gap: 8px;
@@ -181,7 +221,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .tea-title { font-size: 16px; font-weight: 700; }
@@ -247,6 +287,14 @@
     </div>
   </div>
 
+  <!-- РЕЙТИНГ ЧАЮ -->
+  <div class="form-group">
+    <label>Оцінка (Рейтинг)</label>
+    <div class="rating-select" id="ratingSelect">
+      <!-- Зірочки будуть згенеровані через JS -->
+    </div>
+  </div>
+
   <div class="form-group">
     <label>Фотографії (до 6 шт)</label>
     <input type="file" id="teaPhotos" accept="image/*" multiple>
@@ -261,7 +309,7 @@
   <button class="btn" id="saveBtn" onclick="saveTeaHandler()">Додати до колекції</button>
   <button class="btn btn-cancel" id="cancelBtn" onclick="resetForm()" style="display: none; margin-top: 6px;">Скасувати редагування</button>
 
-  <!-- ФИЛЬТРЫ ПО КАТЕГОРИЯМ -->
+  <!-- ФІЛЬТРИ КАТЕГОРІЙ -->
   <div class="category-filters" id="categoryFilters"></div>
 
   <div class="tea-list" id="teaList"></div>
@@ -278,17 +326,41 @@
 
     let teas = [];
     let currentPhotosBase64 = [];
+    let currentRating = 10; // Оцінка за замовчуванням
     let editingId = null;
     let selectedCategory = "Все";
 
+    // Ініціалізація вибору оцінки зірочками (від 1 до 10)
+    function initRatingStars() {
+      const container = document.getElementById('ratingSelect');
+      container.innerHTML = '';
+      for (let i = 1; i <= 10; i++) {
+        container.innerHTML += `<span class="star-icon ${i <= currentRating ? 'active' : ''}" onclick="setRating(${i})">★</span>`;
+      }
+      container.innerHTML += `<span class="rating-value-display" id="ratingValueDisplay">${currentRating} з 10</span>`;
+    }
+
+    function setRating(val) {
+      currentRating = val;
+      const stars = document.querySelectorAll('#ratingSelect .star-icon');
+      stars.forEach((star, index) => {
+        if (index < val) {
+          star.classList.add('active');
+        } else {
+          star.classList.remove('active');
+        }
+      });
+      document.getElementById('ratingValueDisplay').innerText = `${val} з 10`;
+    }
+
     function loadTeas() {
-      const localData = localStorage.getItem('my_teas_v5');
+      const localData = localStorage.getItem('my_teas_v6');
       if (localData) {
         try { teas = JSON.parse(localData); } catch(e) {}
       }
 
       if (tg.CloudStorage) {
-        tg.CloudStorage.getItem('my_teas_cloud_v5', (err, value) => {
+        tg.CloudStorage.getItem('my_teas_cloud_v6', (err, value) => {
           if (!err && value) {
             try {
               const cloudTeas = JSON.parse(value);
@@ -297,10 +369,11 @@
                   const match = teas.find(lTea => lTea.id === cTea.id);
                   return { 
                     ...cTea, 
-                    photos: (match && match.photos) ? match.photos : (match && match.photo ? [match.photo] : []) 
+                    photos: (match && match.photos) ? match.photos : (match && match.photo ? [match.photo] : []),
+                    rating: cTea.rating || (match ? match.rating : 10)
                   };
                 });
-                localStorage.setItem('my_teas_v5', JSON.stringify(teas));
+                localStorage.setItem('my_teas_v6', JSON.stringify(teas));
               }
             } catch(e) {}
           }
@@ -312,7 +385,7 @@
     }
 
     function saveTeasToStorage() {
-      localStorage.setItem('my_teas_v5', JSON.stringify(teas));
+      localStorage.setItem('my_teas_v6', JSON.stringify(teas));
 
       if (tg.CloudStorage) {
         const cleanTeas = teas.map(t => ({
@@ -320,22 +393,22 @@
           name: t.name,
           year: t.year,
           category: t.category,
+          rating: t.rating,
           notes: t.notes
         }));
 
-        tg.CloudStorage.setItem('my_teas_cloud_v5', JSON.stringify(cleanTeas), (err) => {
-          if (err) console.error("Cloud Storage Error:", err);
+        tg.CloudStorage.setItem('my_teas_cloud_v6', JSON.stringify(cleanTeas), (err) => {
+          if (err) console.error("Помилка Cloud Storage:", err);
         });
       }
     }
 
-    // Добавление новых фото в текущий массив (без перезаписи старых)
     document.getElementById('teaPhotos').addEventListener('change', function(e) {
       const files = Array.from(e.target.files);
       const availableSlots = 6 - currentPhotosBase64.length;
 
       if (availableSlots <= 0) {
-        alert('Максимум 6 фотографій!');
+        alert('Максимум 6 фотографий!');
         this.value = '';
         return;
       }
@@ -364,10 +437,9 @@
         reader.readAsDataURL(file);
       });
 
-      this.value = ''; // Сбрасываем input, чтобы можно было выбрать те же файлы снова
+      this.value = '';
     });
 
-    // Отрисовка превью фото с кнопками удаления
     function renderPreviewGrid() {
       const previewGrid = document.getElementById('previewGrid');
       previewGrid.innerHTML = '';
@@ -382,7 +454,6 @@
       });
     }
 
-    // Удаление конкретного фото из массива
     function removePhoto(index) {
       currentPhotosBase64.splice(index, 1);
       renderPreviewGrid();
@@ -441,12 +512,15 @@
             `</div>`;
         }
 
+        const ratingVal = tea.rating || 10;
+
         list.innerHTML += `
           <div class="tea-card">
             <div class="card-header">
               <span class="tea-title">${tea.name} (${tea.year})</span>
               <span class="badge">${tea.category}</span>
             </div>
+            <div class="card-rating">⭐️ Оцінка: ${ratingVal} з 10</div>
             ${galleryHtml}
             <div class="notes-box">${tea.notes || 'Без опису'}</div>
             <div class="card-actions">
@@ -473,6 +547,7 @@
           teas[index].name = name;
           teas[index].year = year;
           teas[index].category = category;
+          teas[index].rating = currentRating;
           teas[index].notes = notes;
           teas[index].photos = [...currentPhotosBase64];
         }
@@ -482,6 +557,7 @@
           name,
           year,
           category,
+          rating: currentRating,
           notes,
           photos: [...currentPhotosBase64]
         });
@@ -502,7 +578,8 @@
       document.getElementById('teaCategory').value = tea.category;
       document.getElementById('teaNotes').value = tea.notes;
 
-      // Загружаем сохранённые фото чая в массив редактирования
+      setRating(tea.rating || 10);
+
       currentPhotosBase64 = tea.photos ? [...tea.photos] : (tea.photo ? [tea.photo] : []);
       renderPreviewGrid();
 
@@ -519,6 +596,7 @@
       document.getElementById('teaPhotos').value = '';
       document.getElementById('previewGrid').innerHTML = '';
       currentPhotosBase64 = [];
+      setRating(10);
 
       document.getElementById('saveBtn').innerText = 'Додати до колекції';
       document.getElementById('cancelBtn').style.display = 'none';
@@ -538,10 +616,12 @@
       if (!tea) return;
 
       const categoryTag = tea.category.replace(/\s+/g, '_');
+      const ratingVal = tea.rating || 10;
       
       let cardText = `🍃 ${tea.name.toUpperCase()} (${tea.year} р.)\n`;
       cardText += `━━━━━━━━━━━━━━━━━━\n`;
       cardText += `🏷 Категорія: #${categoryTag}\n`;
+      cardText += `⭐️ Оцінка: ${ratingVal} з 10\n`;
       if (tea.notes) {
         cardText += `📝 Враження:\n${tea.notes}\n`;
       }
@@ -552,6 +632,7 @@
       tg.openTelegramLink(shareUrl);
     }
 
+    initRatingStars();
     loadTeas();
   </script>
 </body>
