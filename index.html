@@ -167,12 +167,12 @@
       background-color: var(--accent-hover);
     }
 
-    /* Превью фото при редактировании */
+    /* Сетка предпросмотра выбранных фото с кнопкой удаления */
     .image-preview-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 8px;
-      margin-top: 8px;
+      margin-top: 10px;
     }
 
     .preview-thumb {
@@ -180,6 +180,7 @@
       aspect-ratio: 1;
       border-radius: 8px;
       overflow: hidden;
+      border: 1px solid var(--card-border);
     }
 
     .preview-thumb img {
@@ -190,19 +191,20 @@
 
     .preview-thumb .btn-remove-img {
       position: absolute;
-      top: 2px;
-      right: 2px;
-      background: rgba(239, 68, 68, 0.85);
+      top: 3px;
+      right: 3px;
+      background: rgba(239, 68, 68, 0.9);
       color: white;
       border: none;
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      font-size: 10px;
+      width: 22px;
+      height: 22px;
+      font-size: 11px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
     /* Карточки Каталога */
@@ -396,8 +398,8 @@
           <textarea id="tea-desc" required placeholder="Смакові ноти, походження..."></textarea>
         </div>
         <div class="form-group">
-          <label>Фотографії (до 5 штук):</label>
-          <input type="file" id="tea-image-files" accept="image/*" multiple>
+          <label id="upload-label">Обрати фото (до 5 штук):</label>
+          <input type="file" id="tea-image-files" accept="image/*" multiple onchange="handleFileSelect(event)">
           <div id="edit-images-preview" class="image-preview-grid"></div>
         </div>
         <button type="submit" id="submit-btn" class="btn-submit">Додати чай</button>
@@ -448,7 +450,7 @@
     const isAdmin = (Number(currentUserId) === Number(ADMIN_TELEGRAM_ID));
 
     let editingItemId = null;
-    let editingImagesList = []; // Временное хранение массива картинок при редактировании
+    let editingImagesList = []; // Массив Base64 строк всех выбранных/сохраненных фото
     let currentSelectedCategory = 'all';
 
     // 3. Старт
@@ -498,6 +500,59 @@
       });
     }
 
+    // Обработка выбора файлов с мгновенной добавкой в массив
+    async function handleFileSelect(event) {
+      const files = Array.from(event.target.files);
+      if (!files.length) return;
+
+      const remainingSlots = 5 - editingImagesList.length;
+      if (remainingSlots <= 0) {
+        alert('Максимум можна додати 5 фотографій!');
+        event.target.value = '';
+        return;
+      }
+
+      const filesToProcess = files.slice(0, remainingSlots);
+
+      for (let file of filesToProcess) {
+        try {
+          const b64 = await fileToBase64(file);
+          editingImagesList.push(b64);
+        } catch (err) {
+          console.error("Помилка читання файла", err);
+        }
+      }
+
+      // Очищаем инпут, чтобы можно было сразу выбрать еще фото
+      event.target.value = '';
+      renderPreviewImages();
+    }
+
+    // Отрисовка превью выбранных фото с кнопкой поштучного удаления
+    function renderPreviewImages() {
+      const container = document.getElementById('edit-images-preview');
+      const label = document.getElementById('upload-label');
+      container.innerHTML = '';
+
+      label.textContent = `Обрати фото (${editingImagesList.length}/5):`;
+
+      editingImagesList.forEach((src, idx) => {
+        const div = document.createElement('div');
+        div.className = 'preview-thumb';
+        div.innerHTML = `
+          <img src="${src}">
+          <button type="button" class="btn-remove-img" onclick="removeImageFromEdit(${idx})" title="Видалити фото">✕</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Поштучное удаление картинки из списка
+    window.removeImageFromEdit = function(index) {
+      editingImagesList.splice(index, 1);
+      renderPreviewImages();
+    };
+
     // Добавление / Редактирование товара
     async function handleFormSubmit(e) {
       e.preventDefault();
@@ -506,22 +561,11 @@
       const title = document.getElementById('tea-name').value.trim();
       const price = document.getElementById('tea-price').value.trim();
       const description = document.getElementById('tea-desc').value.trim();
-      const fileInput = document.getElementById('tea-image-files');
 
-      let newImages = [...editingImagesList];
+      let finalImages = [...editingImagesList];
 
-      if (fileInput.files.length > 0) {
-        const availableSlots = 5 - newImages.length;
-        const filesToProcess = Array.from(fileInput.files).slice(0, availableSlots);
-        
-        for (let file of filesToProcess) {
-          const b64 = await fileToBase64(file);
-          newImages.push(b64);
-        }
-      }
-
-      if (newImages.length === 0) {
-        newImages.push('https://via.placeholder.com/400x300?text=No+Image');
+      if (finalImages.length === 0) {
+        finalImages.push('https://via.placeholder.com/400x300?text=No+Image');
       }
 
       const itemData = {
@@ -529,7 +573,7 @@
         title,
         price,
         description,
-        images: newImages,
+        images: finalImages,
         updatedAt: Date.now()
       };
 
@@ -554,7 +598,7 @@
       editingItemId = null;
       editingImagesList = [];
       document.getElementById('add-tea-form').reset();
-      document.getElementById('edit-images-preview').innerHTML = '';
+      renderPreviewImages();
       document.getElementById('submit-btn').textContent = 'Додати чай';
     }
 
@@ -669,26 +713,6 @@
         document.getElementById('submit-btn').textContent = 'Зберегти зміни';
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
-    };
-
-    // Отрисовка предпросмотра фото в панели админа с функцией удаления
-    function renderPreviewImages() {
-      const container = document.getElementById('edit-images-preview');
-      container.innerHTML = '';
-      editingImagesList.forEach((src, idx) => {
-        const div = document.createElement('div');
-        div.className = 'preview-thumb';
-        div.innerHTML = `
-          <img src="${src}">
-          <button type="button" class="btn-remove-img" onclick="removeImageFromEdit(${idx})">✕</button>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    window.removeImageFromEdit = function(index) {
-      editingImagesList.splice(index, 1);
-      renderPreviewImages();
     };
 
     // Форма отзыва
