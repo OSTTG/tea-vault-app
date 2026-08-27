@@ -14,6 +14,7 @@
       --accent-color: #4CAF50;
       --danger-color: #ff4d4d;
       --input-bg: #2d2d2d;
+      --star-color: #ffc107;
     }
 
     body {
@@ -25,7 +26,7 @@
       padding-bottom: 80px;
     }
 
-    h2, h3 {
+    h2, h3, h4 {
       margin-top: 0;
     }
 
@@ -81,7 +82,7 @@
     }
 
     input[type="text"],
-    input[type="url"],
+    select,
     textarea,
     input[type="file"] {
       width: 100%;
@@ -145,7 +146,7 @@
       margin-top: 12px;
     }
 
-    .btn-edit, .btn-delete {
+    .btn-edit, .btn-delete, .btn-review-toggle {
       flex: 1;
       padding: 8px;
       border: none;
@@ -156,20 +157,56 @@
 
     .btn-edit { background-color: #ff9800; color: white; }
     .btn-delete { background-color: var(--danger-color); color: white; }
+    .btn-review-toggle { background-color: #2196F3; color: white; margin-top: 10px; width: 100%; }
+
+    /* Блок отзывов в карточке */
+    .reviews-section {
+      margin-top: 15px;
+      border-top: 1px solid #333;
+      padding-top: 12px;
+    }
+
+    .review-item {
+      background-color: #282828;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      color: #aaa;
+      margin-bottom: 4px;
+    }
+
+    .review-rating {
+      color: var(--star-color);
+      font-weight: bold;
+    }
+
+    .add-review-form {
+      display: none;
+      margin-top: 10px;
+      background: #252525;
+      padding: 10px;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
 
   <!-- Навигация по вкладкам -->
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('tab-catalog')">🍵 Каталог</button>
-    <button class="tab-btn" onclick="switchTab('tab-reviews')">💬 Відгуки</button>
+  <div class="tabs" id="tabs-container">
+    <button class="tab-btn active" id="tab-btn-catalog" onclick="switchTab(event, 'tab-catalog')">🍵 Каталог</button>
+    <button class="tab-btn" id="tab-btn-reviews" onclick="switchTab(event, 'tab-reviews')" style="display: none;">💬 Відгуки</button>
   </div>
 
-  <!-- Вкладка 1: Каталог -->
+  <!-- Вкладка 1: Каталог / Отзывы (для обычных пользователей это единый каталог) -->
   <div id="tab-catalog" class="tab-content active">
     
-    <!-- Панель Администратора (Видна только пользователю с ADMIN_TELEGRAM_ID) -->
+    <!-- Панель Администратора (видна только админу) -->
     <div id="admin-panel" class="admin-panel" style="display: none;">
       <h2>👑 Панель Адміна</h2>
       <form id="add-tea-form">
@@ -189,10 +226,6 @@
           <label>Завантажити фото з пристрою:</label>
           <input type="file" id="tea-image-file" accept="image/*">
         </div>
-        <div class="form-group">
-          <label>Або посилання на фото (URL):</label>
-          <input type="url" id="tea-image-url" placeholder="https://...">
-        </div>
         <button type="submit" id="submit-btn" class="btn-submit">Додати чай</button>
       </form>
     </div>
@@ -201,18 +234,18 @@
     <div id="catalog-list" class="catalog-grid"></div>
   </div>
 
-  <!-- Вкладка 2: Отзывы -->
+  <!-- Вкладка 2: Отзывы (резервная вкладка админа) -->
   <div id="tab-reviews" class="tab-content">
-    <h2>💬 Відгуки покупців</h2>
-    <p>Розділ відгуків у розробці...</p>
+    <h2>💬 Всі відгуки</h2>
+    <div id="all-reviews-list"></div>
   </div>
 
-  <!-- Подключение SDK Firebase (Compat-версия для простой работы через CDN) -->
+  <!-- Подключение SDK Firebase (Compat Realtime Database) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script>
-    // 1. Инициализация Firebase с твоими ключами
+    // 1. Инициализация Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCM1BEHytNhWQ9M7m5VE50ish2_d1X7TTw",
       authDomain: "teacatalog.firebaseapp.com",
@@ -226,21 +259,30 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2. Настройки администратора
+    // 2. Настройки пользователя и Telegram
     const ADMIN_TELEGRAM_ID = 770549804;
     const tg = window.Telegram?.WebApp;
     if (tg) tg.ready();
 
-    const currentUserId = tg?.initDataUnsafe?.user?.id || ADMIN_TELEGRAM_ID; 
-    const isAdmin = (currentUserId === ADMIN_TELEGRAM_ID);
+    const currentUserId = tg?.initDataUnsafe?.user?.id || ADMIN_TELEGRAM_ID;
+    const currentUserName = tg?.initDataUnsafe?.user?.first_name || "Користувач";
+    const isAdmin = (Number(currentUserId) === Number(ADMIN_TELEGRAM_ID));
 
     let editingItemId = null;
 
-    // 3. Запуск при загрузке страницы
+    // 3. Настройка интерфейса под роль
     document.addEventListener('DOMContentLoaded', () => {
       const adminPanel = document.getElementById('admin-panel');
-      if (adminPanel && isAdmin) {
+      const tabBtnCatalog = document.getElementById('tab-btn-catalog');
+      const tabBtnReviews = document.getElementById('tab-btn-reviews');
+
+      if (isAdmin) {
         adminPanel.style.display = 'block';
+        tabBtnCatalog.textContent = '🍵 Каталог (Адмін)';
+        tabBtnReviews.style.display = 'block';
+      } else {
+        tabBtnCatalog.textContent = '🍵 Каталог';
+        tabBtnReviews.style.display = 'none';
       }
 
       const itemForm = document.getElementById('add-tea-form');
@@ -252,15 +294,15 @@
     });
 
     // Переключение вкладок
-    function switchTab(tabId) {
+    function switchTab(evt, tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
       document.getElementById(tabId).classList.add('active');
-      event.currentTarget.classList.add('active');
+      evt.currentTarget.classList.add('active');
     }
 
-    // Конвертация файла в Base64
+    // Base64 конвертер
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -270,7 +312,7 @@
       });
     }
 
-    // Обработка формы (Добавление и Редактирование)
+    // Сохранение и редактирование товара админом
     async function handleFormSubmit(e) {
       e.preventDefault();
 
@@ -278,14 +320,11 @@
       const price = document.getElementById('tea-price').value.trim();
       const description = document.getElementById('tea-desc').value.trim();
       const fileInput = document.getElementById('tea-image-file');
-      const urlInput = document.getElementById('tea-image-url');
 
       let imageUrl = '';
 
       if (fileInput && fileInput.files && fileInput.files[0]) {
         imageUrl = await fileToBase64(fileInput.files[0]);
-      } else if (urlInput && urlInput.value.trim()) {
-        imageUrl = urlInput.value.trim();
       }
 
       const itemData = {
@@ -300,7 +339,6 @@
       }
 
       if (editingItemId) {
-        // Режим редактирования
         db.ref('catalog/' + editingItemId).update(itemData)
           .then(() => {
             alert('Позицію оновлено!');
@@ -308,7 +346,6 @@
           })
           .catch(err => alert('Помилка оновлення: ' + err.message));
       } else {
-        // Режим добавления
         if (!imageUrl) itemData.image = 'https://via.placeholder.com/300x200?text=No+Image';
         db.ref('catalog').push(itemData)
           .then(() => {
@@ -326,7 +363,7 @@
       if (submitBtn) submitBtn.textContent = 'Додати чай';
     }
 
-    // Загрузка товаров из облачной базы данных в реальном времени
+    // Отрисовка каталога и отзывов
     function loadItemsFromFirebase() {
       const catalogContainer = document.getElementById('catalog-list');
 
@@ -342,26 +379,103 @@
 
         Object.keys(data).forEach((id) => {
           const item = data[id];
+          const reviews = item.reviews ? Object.values(item.reviews) : [];
+
+          // Расчет среднего рейтинга
+          let avgRatingHtml = '';
+          if (reviews.length > 0) {
+            const sum = reviews.reduce((acc, r) => acc + Number(r.rating), 0);
+            const avg = (sum / reviews.length).toFixed(1);
+            avgRatingHtml = `<span class="review-rating">⭐ ${avg}/10 (${reviews.length})</span>`;
+          }
+
           const card = document.createElement('div');
           card.className = 'tea-card';
           card.innerHTML = `
             <img src="${item.image}" alt="${item.title}">
-            <h3>${item.title}</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h3>${item.title}</h3>
+              ${avgRatingHtml}
+            </div>
             <p class="tea-price">${item.price}</p>
             <p style="color: #ccc; font-size: 14px; line-height: 1.4;">${item.description}</p>
+            
             ${isAdmin ? `
               <div class="admin-actions">
                 <button class="btn-edit" onclick="editItem('${id}')">✏️ Редагувати</button>
                 <button class="btn-delete" onclick="deleteItem('${id}')">🗑 Видалити</button>
               </div>
             ` : ''}
+
+            <!-- Раздел отзывов к товару -->
+            <button class="btn-review-toggle" onclick="toggleReviewForm('${id}')">✍️ Залишити відгук</button>
+
+            <div id="form-review-${id}" class="add-review-form">
+              <h4>Залишити відгук:</h4>
+              <div class="form-group">
+                <label>Оцінка (1-10):</label>
+                <select id="rating-${id}">
+                  ${[10,9,8,7,6,5,4,3,2,1].map(n => `<option value="${n}">${n} / 10</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Ваш коментар:</label>
+                <textarea id="comment-${id}" placeholder="Поділіться враженнями про чай..."></textarea>
+              </div>
+              <button class="btn-submit" onclick="submitReview('${id}')">Надіслати відгук</button>
+            </div>
+
+            <div class="reviews-section">
+              <h4>Відгуки (${reviews.length}):</h4>
+              ${reviews.length === 0 ? '<p style="color:#777; font-size:13px;">Поки немає відгуків. Будьте першим!</p>' : ''}
+              ${reviews.map(r => `
+                <div class="review-item">
+                  <div class="review-header">
+                    <strong>${r.userName}</strong>
+                    <span class="review-rating">⭐ ${r.rating}/10</span>
+                  </div>
+                  <div>${r.text}</div>
+                </div>
+              `).join('')}
+            </div>
           `;
           catalogContainer.appendChild(card);
         });
       });
     }
 
-    // Функция для подстановки данных в форму при редактировании
+    // Форма добавления отзыва
+    window.toggleReviewForm = function(id) {
+      const form = document.getElementById(`form-review-${id}`);
+      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    };
+
+    // Отправка отзыва в БД
+    window.submitReview = function(itemId) {
+      const rating = document.getElementById(`rating-${itemId}`).value;
+      const text = document.getElementById(`comment-${itemId}`).value.trim();
+
+      if (!text) {
+        alert('Будь ласка, напишіть текст відгуку!');
+        return;
+      }
+
+      const reviewData = {
+        userName: currentUserName,
+        userId: currentUserId,
+        rating: Number(rating),
+        text: text,
+        createdAt: Date.now()
+      };
+
+      db.ref(`catalog/${itemId}/reviews`).push(reviewData)
+        .then(() => {
+          alert('Дякуємо за ваш відгук!');
+        })
+        .catch(err => alert('Помилка надсилання: ' + err.message));
+    };
+
+    // Редактирование товара
     window.editItem = function(id) {
       db.ref('catalog/' + id).once('value').then((snapshot) => {
         const item = snapshot.val();
@@ -379,7 +493,7 @@
       });
     };
 
-    // Функция удаления товара
+    // Удаление товара
     window.deleteItem = function(id) {
       if (confirm('Ви дійсно хочете видалити цю позицію?')) {
         db.ref('catalog/' + id).remove();
