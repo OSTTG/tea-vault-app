@@ -96,7 +96,54 @@
       border-radius: 8px;
     }
 
-    .tea-list { margin-top: 24px; }
+    /* СТИЛИ ПРЕВЬЮ ПРИ ВЫБОРЕ И ГАЛЕРЕИ В КАРТОЧКЕ */
+    .photo-preview-grid, .card-photo-grid {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .preview-thumb, .card-photo-thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+    }
+
+    /* ФИЛЬТРЫ КАТЕГОРИЙ */
+    .category-filters {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-top: 20px;
+      margin-bottom: 12px;
+      scrollbar-width: none;
+    }
+    .category-filters::-webkit-scrollbar { display: none; }
+
+    .filter-chip {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--hint-color);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-chip.active {
+      background-color: var(--accent-color);
+      color: #18181a;
+      border-color: var(--accent-color);
+      font-weight: 600;
+    }
+
+    .tea-list { margin-top: 8px; }
 
     .tea-card {
       background-color: var(--card-bg);
@@ -123,17 +170,6 @@
       font-size: 11px;
       font-weight: 600;
       border: 1px solid #543c2c;
-    }
-
-    .card-body { display: flex; gap: 12px; }
-
-    .tea-img {
-      width: 70px;
-      height: 70px;
-      border-radius: 10px;
-      object-fit: cover;
-      flex-shrink: 0;
-      border: 1px solid var(--border-color);
     }
 
     .notes-box {
@@ -188,8 +224,9 @@
   </div>
 
   <div class="form-group">
-    <label>Фото бліна / листя</label>
-    <input type="file" id="teaPhoto" accept="image/*">
+    <label>Фотографії (до 6 шт)</label>
+    <input type="file" id="teaPhotos" accept="image/*" multiple>
+    <div class="photo-preview-grid" id="previewGrid"></div>
   </div>
 
   <div class="form-group">
@@ -200,33 +237,46 @@
   <button class="btn" id="saveBtn" onclick="saveTeaHandler()">Додати до колекції</button>
   <button class="btn btn-cancel" id="cancelBtn" onclick="resetForm()" style="display: none; margin-top: 6px;">Скасувати редагування</button>
 
+  <!-- ФИЛЬТРЫ ПО КАТЕГОРИЯМ -->
+  <div class="category-filters" id="categoryFilters"></div>
+
   <div class="tea-list" id="teaList"></div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
+    const categoriesList = [
+      "Шу Пуер", "Шен Пуер", "Улун", 
+      "Червоний чай", "Зелений чай", "Білий чай", 
+      "Жовтий чай", "Хей Ча (Чорний)", "Я Бао (Бруньки)"
+    ];
+
     let teas = [];
-    let currentPhotoBase64 = "";
+    let currentPhotosBase64 = [];
     let editingId = null;
+    let selectedCategory = "Все";
 
     function loadTeas() {
-      const localData = localStorage.getItem('my_teas_v4');
+      const localData = localStorage.getItem('my_teas_v5');
       if (localData) {
         try { teas = JSON.parse(localData); } catch(e) {}
       }
 
       if (tg.CloudStorage) {
-        tg.CloudStorage.getItem('my_teas_cloud_v4', (err, value) => {
+        tg.CloudStorage.getItem('my_teas_cloud_v5', (err, value) => {
           if (!err && value) {
             try {
               const cloudTeas = JSON.parse(value);
               if (cloudTeas && cloudTeas.length > 0) {
                 teas = cloudTeas.map(cTea => {
                   const match = teas.find(lTea => lTea.id === cTea.id);
-                  return { ...cTea, photo: match ? match.photo : "" };
+                  return { 
+                    ...cTea, 
+                    photos: (match && match.photos) ? match.photos : (match && match.photo ? [match.photo] : []) 
+                  };
                 });
-                localStorage.setItem('my_teas_v4', JSON.stringify(teas));
+                localStorage.setItem('my_teas_v5', JSON.stringify(teas));
               }
             } catch(e) {}
           }
@@ -238,7 +288,7 @@
     }
 
     function saveTeasToStorage() {
-      localStorage.setItem('my_teas_v4', JSON.stringify(teas));
+      localStorage.setItem('my_teas_v5', JSON.stringify(teas));
 
       if (tg.CloudStorage) {
         const cleanTeas = teas.map(t => ({
@@ -249,45 +299,95 @@
           notes: t.notes
         }));
 
-        tg.CloudStorage.setItem('my_teas_cloud_v4', JSON.stringify(cleanTeas), (err) => {
+        tg.CloudStorage.setItem('my_teas_cloud_v5', JSON.stringify(cleanTeas), (err) => {
           if (err) console.error("Cloud Storage Error:", err);
         });
       }
     }
 
-    document.getElementById('teaPhoto').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
+    // Обработка нескольких выбранных фотографий (до 6 штук)
+    document.getElementById('teaPhotos').addEventListener('change', function(e) {
+      const files = Array.from(e.target.files).slice(0, 6);
+      currentPhotosBase64 = [];
+      const previewGrid = document.getElementById('previewGrid');
+      previewGrid.innerHTML = '';
+
+      files.forEach(file => {
         const reader = new FileReader();
         reader.onload = function(event) {
           const img = new Image();
           img.src = event.target.result;
           img.onload = function() {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 250;
+            const MAX_WIDTH = 300;
             const scaleFactor = MAX_WIDTH / img.width;
             canvas.width = MAX_WIDTH;
             canvas.height = img.height * scaleFactor;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+            
+            const base64 = canvas.toDataURL('image/jpeg', 0.6);
+            currentPhotosBase64.push(base64);
+
+            previewGrid.innerHTML += `<img src="${base64}" class="preview-thumb">`;
           }
         };
         reader.readAsDataURL(file);
-      }
+      });
     });
 
+    function renderFilters() {
+      const filtersContainer = document.getElementById('categoryFilters');
+      filtersContainer.innerHTML = '';
+
+      const allCount = teas.length;
+      const allActive = selectedCategory === "Все" ? "active" : "";
+      filtersContainer.innerHTML += `
+        <div class="filter-chip ${allActive}" onclick="setFilter('Все')">Все (${allCount})</div>
+      `;
+
+      categoriesList.forEach(cat => {
+        const count = teas.filter(t => t.category === cat).length;
+        if (count > 0 || selectedCategory === cat) {
+          const activeClass = selectedCategory === cat ? "active" : "";
+          filtersContainer.innerHTML += `
+            <div class="filter-chip ${activeClass}" onclick="setFilter('${cat}')">${cat} (${count})</div>
+          `;
+        }
+      });
+    }
+
+    function setFilter(cat) {
+      selectedCategory = cat;
+      renderTeas();
+    }
+
     function renderTeas() {
+      renderFilters();
+
       const list = document.getElementById('teaList');
       list.innerHTML = '';
 
-      if (teas.length === 0) {
-        list.innerHTML = '<p style="text-align: center; color: var(--hint-color); font-size: 13px; margin-top: 30px;">Колекція порожня. Додай свій перший чай!</p>';
+      const filteredTeas = selectedCategory === "Все" 
+        ? teas 
+        : teas.filter(t => t.category === selectedCategory);
+
+      if (filteredTeas.length === 0) {
+        const emptyMsg = selectedCategory === "Все"
+          ? 'Колекція порожня. Додай свій перший чай!'
+          : `У категорії "${selectedCategory}" поки немає чаїв.`;
+        list.innerHTML = `<p style="text-align: center; color: var(--hint-color); font-size: 13px; margin-top: 30px;">${emptyMsg}</p>`;
         return;
       }
 
-      teas.forEach((tea) => {
-        const photoHtml = tea.photo ? `<img src="${tea.photo}" class="tea-img">` : '';
+      filteredTeas.forEach((tea) => {
+        const photoList = tea.photos || (tea.photo ? [tea.photo] : []);
+        let galleryHtml = '';
+        if (photoList.length > 0) {
+          galleryHtml = `<div class="card-photo-grid">` + 
+            photoList.map(p => `<img src="${p}" class="card-photo-thumb">`).join('') + 
+            `</div>`;
+        }
 
         list.innerHTML += `
           <div class="tea-card">
@@ -295,12 +395,8 @@
               <span class="tea-title">${tea.name} (${tea.year})</span>
               <span class="badge">${tea.category}</span>
             </div>
-            <div class="card-body">
-              ${photoHtml}
-              <div style="flex-grow: 1;">
-                <div class="notes-box">${tea.notes || 'Без опису'}</div>
-              </div>
-            </div>
+            ${galleryHtml}
+            <div class="notes-box">${tea.notes || 'Без опису'}</div>
             <div class="card-actions">
               <button class="btn btn-share" onclick="shareTea(${tea.id})">✈️ Поділитися</button>
               <button class="btn btn-edit" onclick="editTea(${tea.id})">✏️ Редагувати</button>
@@ -326,8 +422,8 @@
           teas[index].year = year;
           teas[index].category = category;
           teas[index].notes = notes;
-          if (currentPhotoBase64) {
-            teas[index].photo = currentPhotoBase64;
+          if (currentPhotosBase64.length > 0) {
+            teas[index].photos = currentPhotosBase64;
           }
         }
       } else {
@@ -337,7 +433,7 @@
           year,
           category,
           notes,
-          photo: currentPhotoBase64
+          photos: currentPhotosBase64
         });
       }
 
@@ -356,6 +452,10 @@
       document.getElementById('teaCategory').value = tea.category;
       document.getElementById('teaNotes').value = tea.notes;
 
+      currentPhotosBase64 = tea.photos || (tea.photo ? [tea.photo] : []);
+      const previewGrid = document.getElementById('previewGrid');
+      previewGrid.innerHTML = currentPhotosBase64.map(p => `<img src="${p}" class="preview-thumb">`).join('');
+
       document.getElementById('saveBtn').innerText = 'Зберегти зміни';
       document.getElementById('cancelBtn').style.display = 'block';
 
@@ -366,8 +466,9 @@
       editingId = null;
       document.getElementById('teaName').value = '';
       document.getElementById('teaNotes').value = '';
-      document.getElementById('teaPhoto').value = '';
-      currentPhotoBase64 = "";
+      document.getElementById('teaPhotos').value = '';
+      document.getElementById('previewGrid').innerHTML = '';
+      currentPhotosBase64 = [];
 
       document.getElementById('saveBtn').innerText = 'Додати до колекції';
       document.getElementById('cancelBtn').style.display = 'none';
@@ -382,7 +483,6 @@
       }
     }
 
-    // КРАСИВЫЙ И ЧИСТЫЙ ФОРМАТ ДЛЯ ОТПРАВКИ СО СМАЙЛИКАМИ
     function shareTea(id) {
       const tea = teas.find(t => t.id === id);
       if (!tea) return;
