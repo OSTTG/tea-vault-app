@@ -16,7 +16,6 @@
       --hint-color: #8e8e93;
       --accent-color: #3a86ff;
       --accent-hover: #2563eb;
-      --danger-color: #ff453a;
       --star-active: #ffd60a;
       --star-inactive: #2c2c30;
     }
@@ -235,7 +234,7 @@
       <label>Фотография (с устройства)</label>
       <label class="file-input-btn">
         📷 Выбрать фото
-        <input type="file" id="teaPhotos" accept="image/*" multiple style="display: none;" onchange="handleFileSelect(event, 'my')">
+        <input type="file" id="teaPhotos" accept="image/*" multiple style="display: none;">
       </label>
       <div id="myPhotoPreview" class="photo-grid" style="margin-top: 8px;"></div>
     </div>
@@ -245,7 +244,7 @@
       <textarea id="teaNotes" rows="3" placeholder="Опиши вкус, аромат, проливы..."></textarea>
     </div>
 
-    <button class="btn" onclick="savePersonalTea()">Добавить в личную коллекцию</button>
+    <button class="btn" id="btnSavePersonal">Добавить в личную коллекцию</button>
 
     <div class="tea-list" id="teaList" style="margin-top: 20px;"></div>
   </div>
@@ -254,7 +253,7 @@
   <div id="tabCatalog" style="display: none;">
     <h2>⭐ Общий Каталог</h2>
 
-    <!-- Форма администратора -->
+    <!-- Форма администратора (Только по MY_ADMIN_ID) -->
     <div id="adminCatalogForm" style="display: none; background: var(--card-bg); padding: 14px; border-radius: 12px; border: 1px solid var(--accent-color); margin-bottom: 16px;">
       <h3 style="margin-top: 0; font-size: 15px; color: var(--accent-color);">👑 Панель Администратора</h3>
       <div class="form-group">
@@ -275,11 +274,11 @@
         <label>Фото товара (выбрать с устройства)</label>
         <label class="file-input-btn">
           📷 Выбрать фото товара
-          <input type="file" id="catTeaPhotos" accept="image/*" multiple style="display: none;" onchange="handleFileSelect(event, 'cat')">
+          <input type="file" id="catTeaPhotos" accept="image/*" multiple style="display: none;">
         </label>
         <div id="catPhotoPreview" class="photo-grid" style="margin-top: 8px;"></div>
       </div>
-      <button class="btn" type="button" onclick="addCatalogTeaByAdmin()">Опубликовать для всех</button>
+      <button class="btn" type="button" id="btnAddCatalog">Опубликовать в Firebase</button>
     </div>
 
     <div class="tea-list" id="catalogList"></div>
@@ -287,32 +286,60 @@
 
   <!-- НАВИГАЦИЯ -->
   <nav class="bottom-nav">
-    <button class="nav-btn active" id="btnTabMy" onclick="switchTab('my')">
+    <button class="nav-btn active" id="btnTabMy">
       <span>🍃 Личный</span>
     </button>
-    <button class="nav-btn" id="btnTabCatalog" onclick="switchTab('catalog')">
+    <button class="nav-btn" id="btnTabCatalog">
       <span>⭐ Общий Каталог</span>
     </button>
   </nav>
 
-  <script>
+  <!-- FIREBASE INTEGRATION -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, arrayUnion, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCM1BEHytNhWQ9M7m5VE50ish2_d1X7TTw",
+      authDomain: "teacatalog.firebaseapp.com",
+      projectId: "teacatalog",
+      storageBucket: "teacatalog.firebasestorage.app",
+      messagingSenderId: "94786669497",
+      appId: "1:94786669497:web:e970bd462522ddd41d8468",
+      measurementId: "G-CV53Z92DCK"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
     const tg = window.Telegram?.WebApp || {};
     if (tg.ready) tg.ready();
 
-    // Твой Telegram ID
     const MY_ADMIN_ID = 770549804;
 
     let teas = [];
     let catalogTeas = [];
     let currentRating = 8;
-    
     let tempMyPhotos = [];
     let tempCatPhotos = [];
 
+    // Навигация
+    window.switchTab = function(tab) {
+      document.getElementById('tabMyCollection').style.display = tab === 'my' ? 'block' : 'none';
+      document.getElementById('tabCatalog').style.display = tab === 'catalog' ? 'block' : 'none';
+      document.getElementById('btnTabMy').classList.toggle('active', tab === 'my');
+      document.getElementById('btnTabCatalog').classList.toggle('active', tab === 'catalog');
+    };
+
+    document.getElementById('btnTabMy').onclick = () => switchTab('my');
+    document.getElementById('btnTabCatalog').onclick = () => switchTab('catalog');
+
+    // Админ проверка
     function checkAdminRights() {
       const currentUserId = tg.initDataUnsafe?.user?.id;
       const adminForm = document.getElementById('adminCatalogForm');
-      
       if (currentUserId && Number(currentUserId) === Number(MY_ADMIN_ID)) {
         adminForm.style.display = 'block';
       } else {
@@ -320,26 +347,20 @@
       }
     }
 
-    function switchTab(tab) {
-      document.getElementById('tabMyCollection').style.display = tab === 'my' ? 'block' : 'none';
-      document.getElementById('tabCatalog').style.display = tab === 'catalog' ? 'block' : 'none';
-      document.getElementById('btnTabMy').classList.toggle('active', tab === 'my');
-      document.getElementById('btnTabCatalog').classList.toggle('active', tab === 'catalog');
-    }
-
+    // Звёздочки
     function initRatingStars() {
       const container = document.getElementById('ratingSelect');
       container.innerHTML = '';
       for (let i = 1; i <= 10; i++) {
-        container.innerHTML += `<span class="star-icon ${i <= currentRating ? 'active' : ''}" onclick="setRating(${i})">★</span>`;
+        const star = document.createElement('span');
+        star.className = `star-icon ${i <= currentRating ? 'active' : ''}`;
+        star.textContent = '★';
+        star.onclick = () => { currentRating = i; initRatingStars(); };
+        container.appendChild(star);
       }
     }
 
-    function setRating(val) {
-      currentRating = val;
-      initRatingStars();
-    }
-
+    // Фото
     function handleFileSelect(event, type) {
       const files = Array.from(event.target.files);
       const targetArr = type === 'my' ? tempMyPhotos : tempCatPhotos;
@@ -349,17 +370,17 @@
         const reader = new FileReader();
         reader.onload = function(e) {
           targetArr.push(e.target.result);
-          renderPreviews(targetArr, previewEl);
+          previewEl.innerHTML = targetArr.map(src => `<img src="${src}" class="card-photo-thumb" />`).join('');
         };
         reader.readAsDataURL(file);
       });
     }
 
-    function renderPreviews(arr, element) {
-      element.innerHTML = arr.map(src => `<img src="${src}" class="card-photo-thumb" />`).join('');
-    }
+    document.getElementById('teaPhotos').onchange = (e) => handleFileSelect(e, 'my');
+    document.getElementById('catTeaPhotos').onchange = (e) => handleFileSelect(e, 'cat');
 
-    function savePersonalTea() {
+    // Личная коллекция (Локальная)
+    document.getElementById('btnSavePersonal').onclick = function() {
       const name = document.getElementById('teaName').value.trim();
       if (!name) return alert('Введите название!');
 
@@ -374,15 +395,14 @@
       };
 
       teas.unshift(newTea);
-      localStorage.setItem('my_private_teas_v3', JSON.stringify(teas));
+      localStorage.setItem('my_private_teas_v4', JSON.stringify(teas));
       
       document.getElementById('teaName').value = '';
       document.getElementById('teaNotes').value = '';
       tempMyPhotos = [];
       document.getElementById('myPhotoPreview').innerHTML = '';
-      
       renderPersonalTeas();
-    }
+    };
 
     function renderPersonalTeas() {
       const list = document.getElementById('teaList');
@@ -403,55 +423,59 @@
       `).join('');
     }
 
-    function addCatalogTeaByAdmin() {
+    // Firebase Firestore: Публикация админа
+    document.getElementById('btnAddCatalog').onclick = async function() {
       const name = document.getElementById('catTeaName').value.trim();
       if (!name) return alert('Введите название товара!');
 
-      const newItem = {
-        id: Date.now(),
-        name,
-        category: document.getElementById('catTeaCategory').value,
-        photos: [...tempCatPhotos],
-        reviews: []
-      };
+      try {
+        await addDoc(collection(db, "catalog"), {
+          name,
+          category: document.getElementById('catTeaCategory').value,
+          photos: tempCatPhotos,
+          reviews: [],
+          createdAt: Date.now()
+        });
 
-      catalogTeas.unshift(newItem);
-      localStorage.setItem('catalog_teas_v3', JSON.stringify(catalogTeas));
-
-      if (tg.sendData) {
-        tg.sendData(JSON.stringify({ action: "ADD_PRODUCT", item: newItem }));
+        document.getElementById('catTeaName').value = '';
+        tempCatPhotos = [];
+        document.getElementById('catPhotoPreview').innerHTML = '';
+        alert('Опубликовано в Общий Каталог Firebase!');
+      } catch (e) {
+        alert('Ошибка Firebase: ' + e.message);
       }
+    };
 
-      document.getElementById('catTeaName').value = '';
-      tempCatPhotos = [];
-      document.getElementById('catPhotoPreview').innerHTML = '';
-      
-      alert('Опубликовано!');
-      renderCatalog();
-    }
-
-    function addReview(teaId) {
-      const input = document.getElementById(`rev_${teaId}`);
+    // Firebase Firestore: Добавление отзыва
+    window.addReview = async function(docId) {
+      const input = document.getElementById(`rev_${docId}`);
       const text = input.value.trim();
       if (!text) return;
 
       const userName = tg.initDataUnsafe?.user?.first_name || 'Пользователь';
-      const item = catalogTeas.find(t => t.id === teaId);
-      
-      if (item) {
-        if (!item.reviews) item.reviews = [];
-        const revObj = { user: userName, text: text };
-        item.reviews.push(revObj);
-        
-        localStorage.setItem('catalog_teas_v3', JSON.stringify(catalogTeas));
+      const revObj = { user: userName, text: text, time: Date.now() };
 
-        if (tg.sendData) {
-          tg.sendData(JSON.stringify({ action: "ADD_REVIEW", teaId: teaId, review: revObj }));
-        }
-
+      try {
+        const itemRef = doc(db, "catalog", docId);
+        await updateDoc(itemRef, {
+          reviews: arrayUnion(revObj)
+        });
         input.value = '';
-        renderCatalog();
+      } catch (e) {
+        alert('Ошибка отправки отзыва: ' + e.message);
       }
+    };
+
+    // Firebase Realtime Listener для Каталога
+    function subscribeToCatalog() {
+      const q = query(collection(db, "catalog"), orderBy("createdAt", "desc"));
+      onSnapshot(q, (snapshot) => {
+        catalogTeas = [];
+        snapshot.forEach((doc) => {
+          catalogTeas.push({ id: doc.id, ...doc.data() });
+        });
+        renderCatalog();
+      });
     }
 
     function renderCatalog() {
@@ -483,21 +507,21 @@
           </div>
           <div style="margin-top: 10px; display: flex; gap: 6px;">
             <input type="text" id="rev_${tea.id}" placeholder="Оставить отзыв..." style="padding: 8px; font-size: 13px;">
-            <button class="btn btn-edit" onclick="addReview(${tea.id})" style="width: auto;">Отправить</button>
+            <button class="btn btn-edit" onclick="addReview('${tea.id}')" style="width: auto;">Отправить</button>
           </div>
         </div>
       `).join('');
     }
 
+    // Инициализация
     try {
-      teas = JSON.parse(localStorage.getItem('my_private_teas_v3')) || [];
-      catalogTeas = JSON.parse(localStorage.getItem('catalog_teas_v3')) || [];
+      teas = JSON.parse(localStorage.getItem('my_private_teas_v4')) || [];
     } catch(e) {}
 
     checkAdminRights();
     initRatingStars();
     renderPersonalTeas();
-    renderCatalog();
+    subscribeToCatalog();
   </script>
 </body>
 </html>
