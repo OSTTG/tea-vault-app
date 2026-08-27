@@ -67,6 +67,22 @@
       border: 1px solid #4a3e32;
     }
 
+    .btn-cancel {
+      background: transparent;
+      color: var(--hint-color);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-edit {
+      background: rgba(229, 169, 104, 0.1);
+      color: var(--accent-color);
+      border: 1px solid rgba(229, 169, 104, 0.25);
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
     .btn-danger {
       background: rgba(229, 91, 91, 0.15);
       color: var(--danger-color);
@@ -78,9 +94,9 @@
     }
 
     .btn-share {
-      background: rgba(229, 169, 104, 0.15);
-      color: var(--accent-color);
-      border: 1px solid rgba(229, 169, 104, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
       padding: 8px 12px;
       font-size: 12px;
       cursor: pointer;
@@ -147,15 +163,12 @@
       border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* Исправленный контейнер для генерации PDF */
+    /* Шаблон для PDF */
     #pdf-wrapper {
-      position: absolute;
-      left: -9999px;
-      top: 0;
-      width: 700px;
+      display: none;
       background: #ffffff;
-      color: #2c2623;
-      padding: 20px;
+      color: #111111;
+      padding: 24px;
       font-family: Arial, sans-serif;
     }
   </style>
@@ -200,16 +213,17 @@
     <textarea id="teaNotes" rows="3" placeholder="Опиши смак, аромат, стан, посуд..."></textarea>
   </div>
 
-  <button class="btn" onclick="addTea()">Додати до колекції</button>
+  <button class="btn" id="saveBtn" onclick="saveTeaHandler()">Додати до колекції</button>
+  <button class="btn btn-cancel" id="cancelBtn" onclick="resetForm()" style="display: none; margin-top: 6px;">Скасувати редагування</button>
   <button class="btn btn-secondary" onclick="downloadPDF()">📄 Завантажити PDF-каталог</button>
 
   <div class="tea-list" id="teaList"></div>
 
-  <!-- Контейнер для печатного PDF -->
+  <!-- Блок генерации PDF -->
   <div id="pdf-wrapper">
-    <h2 style="color: #2a1e15; margin-bottom: 10px; border-bottom: 2px solid #e5a968; padding-bottom: 8px;">
+    <h1 style="color: #1a1615; margin-bottom: 12px; border-bottom: 2px solid #e5a968; padding-bottom: 6px; font-size: 22px;">
       🍃 Моя Чайна Колекція
-    </h2>
+    </h1>
     <div id="pdfContent"></div>
   </div>
 
@@ -219,28 +233,25 @@
 
     let teas = [];
     let currentPhotoBase64 = "";
+    let editingId = null;
 
-    // 1. НАДЕЖНАЯ ЗАГРУЗКА
     function loadTeas() {
-      // Сначала мгновенно берем локальную копию
-      const localData = localStorage.getItem('my_teas_v3');
+      const localData = localStorage.getItem('my_teas_v4');
       if (localData) {
         try { teas = JSON.parse(localData); } catch(e) {}
       }
 
-      // Затем запрашиваем синхронизацию у Telegram
       if (tg.CloudStorage) {
-        tg.CloudStorage.getItem('my_teas_cloud_v3', (err, value) => {
+        tg.CloudStorage.getItem('my_teas_cloud_v4', (err, value) => {
           if (!err && value) {
             try {
               const cloudTeas = JSON.parse(value);
               if (cloudTeas && cloudTeas.length > 0) {
-                // Объединяем данные: текст из облака + локальные фото
                 teas = cloudTeas.map(cTea => {
-                  const match = teas.find(lTea => lTea.id === cTea.id || (lTea.name === cTea.name && lTea.year === cTea.year));
+                  const match = teas.find(lTea => lTea.id === cTea.id);
                   return { ...cTea, photo: match ? match.photo : "" };
                 });
-                localStorage.setItem('my_teas_v3', JSON.stringify(teas));
+                localStorage.setItem('my_teas_v4', JSON.stringify(teas));
               }
             } catch(e) {}
           }
@@ -251,12 +262,9 @@
       }
     }
 
-    // 2. НАДЕЖНОЕ СОХРАНЕНИЕ
-    function saveTeas() {
-      // Локально сохраняем абсолютно всё (включая фото)
-      localStorage.setItem('my_teas_v3', JSON.stringify(teas));
+    function saveTeasToStorage() {
+      localStorage.setItem('my_teas_v4', JSON.stringify(teas));
 
-      // В облако Telegram отправляем ТОЛЬКО чистый текст без фото (гарантия 100% прохождения лимита)
       if (tg.CloudStorage) {
         const cleanTeas = teas.map(t => ({
           id: t.id,
@@ -266,13 +274,12 @@
           notes: t.notes
         }));
 
-        tg.CloudStorage.setItem('my_teas_cloud_v3', JSON.stringify(cleanTeas), (err) => {
-          if (err) console.error("Cloud Error:", err);
+        tg.CloudStorage.setItem('my_teas_cloud_v4', JSON.stringify(cleanTeas), (err) => {
+          if (err) console.error("Cloud Storage Error:", err);
         });
       }
     }
 
-    // Обработка фото
     document.getElementById('teaPhoto').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
@@ -297,19 +304,16 @@
 
     function renderTeas() {
       const list = document.getElementById('teaList');
-      const pdfContent = document.getElementById('pdfContent');
       list.innerHTML = '';
-      pdfContent.innerHTML = '';
 
       if (teas.length === 0) {
         list.innerHTML = '<p style="text-align: center; color: var(--hint-color); font-size: 13px; margin-top: 30px;">Колекція порожня. Додай свій перший чай!</p>';
         return;
       }
 
-      teas.forEach((tea, index) => {
+      teas.forEach((tea) => {
         const photoHtml = tea.photo ? `<img src="${tea.photo}" class="tea-img">` : '';
 
-        // UI Карточка
         list.innerHTML += `
           <div class="tea-card">
             <div class="card-header">
@@ -323,31 +327,16 @@
               </div>
             </div>
             <div class="card-actions">
-              <button class="btn btn-share" onclick="shareTea(${index})">✈️ Поділитися</button>
-              <button class="btn btn-danger" onclick="deleteTea(${index})">🗑 Видалити</button>
-            </div>
-          </div>
-        `;
-
-        // PDF Карточка (чистый HTML для html2pdf)
-        const pdfPhotoHtml = tea.photo ? `<img src="${tea.photo}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; margin-right: 10px;">` : '';
-        pdfContent.innerHTML += `
-          <div style="background: #fdfbf7; padding: 10px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #e2d7c7; page-break-inside: avoid;">
-            <div style="font-weight: bold; font-size: 14px; color: #1a1615; margin-bottom: 4px;">
-              ${tea.name} (${tea.year} р.) — <span style="color: #c59b6c;">${tea.category}</span>
-            </div>
-            <div style="display: flex; align-items: flex-start;">
-              ${pdfPhotoHtml}
-              <div style="font-size: 11px; color: #38302a; line-height: 1.3;">
-                ${tea.notes || 'Без опису'}
-              </div>
+              <button class="btn btn-share" onclick="shareTea(${tea.id})">✈️ Поділитися</button>
+              <button class="btn btn-edit" onclick="editTea(${tea.id})">✏️ Редагувати</button>
+              <button class="btn btn-danger" onclick="deleteTea(${tea.id})">🗑 Видалити</button>
             </div>
           </div>
         `;
       });
     }
 
-    function addTea() {
+    function saveTeaHandler() {
       const name = document.getElementById('teaName').value.trim();
       const year = document.getElementById('teaYear').value;
       const category = document.getElementById('teaCategory').value;
@@ -355,51 +344,112 @@
 
       if (!name) return alert('Будь ласка, введи назву чаю!');
 
-      teas.unshift({
-        id: Date.now(),
-        name,
-        year,
-        category,
-        notes,
-        photo: currentPhotoBase64
-      });
+      if (editingId) {
+        const index = teas.findIndex(t => t.id === editingId);
+        if (index !== -1) {
+          teas[index].name = name;
+          teas[index].year = year;
+          teas[index].category = category;
+          teas[index].notes = notes;
+          if (currentPhotoBase64) {
+            teas[index].photo = currentPhotoBase64;
+          }
+        }
+      } else {
+        teas.unshift({
+          id: Date.now(),
+          name,
+          year,
+          category,
+          notes,
+          photo: currentPhotoBase64
+        });
+      }
 
-      saveTeas();
-      
+      saveTeasToStorage();
+      resetForm();
+      renderTeas();
+    }
+
+    function editTea(id) {
+      const tea = teas.find(t => t.id === id);
+      if (!tea) return;
+
+      editingId = tea.id;
+      document.getElementById('teaName').value = tea.name;
+      document.getElementById('teaYear').value = tea.year;
+      document.getElementById('teaCategory').value = tea.category;
+      document.getElementById('teaNotes').value = tea.notes;
+
+      document.getElementById('saveBtn').innerText = 'Зберегти зміни';
+      document.getElementById('cancelBtn').style.display = 'block';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetForm() {
+      editingId = null;
       document.getElementById('teaName').value = '';
       document.getElementById('teaNotes').value = '';
       document.getElementById('teaPhoto').value = '';
       currentPhotoBase64 = "";
-      
-      renderTeas();
+
+      document.getElementById('saveBtn').innerText = 'Додати до колекції';
+      document.getElementById('cancelBtn').style.display = 'none';
     }
 
-    function deleteTea(index) {
+    function deleteTea(id) {
       if (confirm('Видалити цей чай з колекції?')) {
-        teas.splice(index, 1);
-        saveTeas();
+        teas = teas.filter(t => t.id !== id);
+        saveTeasToStorage();
+        if (editingId === id) resetForm();
         renderTeas();
       }
     }
 
-    function shareTea(index) {
-      const tea = teas[index];
-      const cardText = `🍃 *${tea.name.toUpperCase()}* (${tea.year} р.)\n` +
-                       `━━━━━━━━━━━━━━━━━━\n` +
-                       `🏷 *Категорія:* #${tea.category.replace(/\s+/g, '_')}\n` +
-                       `📝 *Враження:*\n${tea.notes || 'Чудовий чай!'}\n` +
-                       `━━━━━━━━━━━━━━━━━━\n` +
-                       `📌 _Чайний Склад_`;
+    // 3. ЧИСТЫЙ И ЧИТАЕМЫЙ ТЕКСТ ПРИ ОТПРАВКЕ
+    function shareTea(id) {
+      const tea = teas.find(t => t.id === id);
+      if (!tea) return;
+
+      let cardText = `${tea.name} (${tea.year})\n`;
+      cardText += `Категорія: ${tea.category}\n`;
+      if (tea.notes) {
+        cardText += `\n${tea.notes}`;
+      }
 
       const shareUrl = `https://t.me/share/url?url=&text=${encodeURIComponent(cardText)}`;
       tg.openTelegramLink(shareUrl);
     }
 
-    // 3. ИСПРАВЛЕННАЯ СТАБИЛЬНАЯ ГЕНЕРАЦИЯ PDF
+    // 1. ИСПРАВЛЕННЫЙ PDF БЕЗ БЕЛОГО ЭКРАНА
     function downloadPDF() {
       if (teas.length === 0) return alert('Колекція порожня!');
 
-      const element = document.getElementById('pdf-wrapper');
+      const wrapper = document.getElementById('pdf-wrapper');
+      const content = document.getElementById('pdfContent');
+      content.innerHTML = '';
+
+      teas.forEach(tea => {
+        const photoHtml = tea.photo ? `<img src="${tea.photo}" style="width: 55px; height: 55px; object-fit: cover; border-radius: 6px; margin-right: 12px; float: left;">` : '';
+        content.innerHTML += `
+          <div style="background: #f9f8f6; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2d7c7; page-break-inside: avoid;">
+            <div style="font-size: 15px; font-weight: bold; color: #1a1615; margin-bottom: 4px;">
+              ${tea.name} (${tea.year} р.) — <span style="color: #b87b3b; font-weight: normal;">${tea.category}</span>
+            </div>
+            <div>
+              ${photoHtml}
+              <div style="font-size: 12px; color: #38302a; line-height: 1.4;">
+                ${tea.notes || 'Без опису'}
+              </div>
+              <div style="clear: both;"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      // Делаем элемент видимым на время конвертации
+      wrapper.style.display = 'block';
 
       const opt = {
         margin:       10,
@@ -409,7 +459,12 @@
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      html2pdf().set(opt).from(element).save();
+      html2pdf().set(opt).from(wrapper).save().then(() => {
+        wrapper.style.display = 'none';
+      }).catch(err => {
+        wrapper.style.display = 'none';
+        console.error("PDF Error:", err);
+      });
     }
 
     loadTeas();
