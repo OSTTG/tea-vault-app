@@ -96,12 +96,18 @@
       border-radius: 8px;
     }
 
-    /* СТИЛИ ПРЕВЬЮ ПРИ ВЫБОРЕ И ГАЛЕРЕИ В КАРТОЧКЕ */
+    /* ПРЕВЬЮ И ИНТЕРАКТИВНОЕ УДАЛЕНИЕ ФОТО */
     .photo-preview-grid, .card-photo-grid {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       margin-top: 8px;
+    }
+
+    .preview-thumb-wrapper {
+      position: relative;
+      width: 60px;
+      height: 60px;
     }
 
     .preview-thumb, .card-photo-thumb {
@@ -110,6 +116,24 @@
       border-radius: 8px;
       object-fit: cover;
       border: 1px solid var(--border-color);
+    }
+
+    .remove-photo-btn {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: var(--danger-color);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      line-height: 18px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
     /* ФИЛЬТРЫ КАТЕГОРИЙ */
@@ -305,14 +329,20 @@
       }
     }
 
-    // Обработка нескольких выбранных фотографий (до 6 штук)
+    // Добавление новых фото в текущий массив (без перезаписи старых)
     document.getElementById('teaPhotos').addEventListener('change', function(e) {
-      const files = Array.from(e.target.files).slice(0, 6);
-      currentPhotosBase64 = [];
-      const previewGrid = document.getElementById('previewGrid');
-      previewGrid.innerHTML = '';
+      const files = Array.from(e.target.files);
+      const availableSlots = 6 - currentPhotosBase64.length;
 
-      files.forEach(file => {
+      if (availableSlots <= 0) {
+        alert('Максимум 6 фотографій!');
+        this.value = '';
+        return;
+      }
+
+      const filesToProcess = files.slice(0, availableSlots);
+
+      filesToProcess.forEach(file => {
         const reader = new FileReader();
         reader.onload = function(event) {
           const img = new Image();
@@ -328,13 +358,35 @@
             
             const base64 = canvas.toDataURL('image/jpeg', 0.6);
             currentPhotosBase64.push(base64);
-
-            previewGrid.innerHTML += `<img src="${base64}" class="preview-thumb">`;
+            renderPreviewGrid();
           }
         };
         reader.readAsDataURL(file);
       });
+
+      this.value = ''; // Сбрасываем input, чтобы можно было выбрать те же файлы снова
     });
+
+    // Отрисовка превью фото с кнопками удаления
+    function renderPreviewGrid() {
+      const previewGrid = document.getElementById('previewGrid');
+      previewGrid.innerHTML = '';
+
+      currentPhotosBase64.forEach((photoBase64, index) => {
+        previewGrid.innerHTML += `
+          <div class="preview-thumb-wrapper">
+            <img src="${photoBase64}" class="preview-thumb">
+            <button type="button" class="remove-photo-btn" onclick="removePhoto(${index})">×</button>
+          </div>
+        `;
+      });
+    }
+
+    // Удаление конкретного фото из массива
+    function removePhoto(index) {
+      currentPhotosBase64.splice(index, 1);
+      renderPreviewGrid();
+    }
 
     function renderFilters() {
       const filtersContainer = document.getElementById('categoryFilters');
@@ -422,9 +474,7 @@
           teas[index].year = year;
           teas[index].category = category;
           teas[index].notes = notes;
-          if (currentPhotosBase64.length > 0) {
-            teas[index].photos = currentPhotosBase64;
-          }
+          teas[index].photos = [...currentPhotosBase64];
         }
       } else {
         teas.unshift({
@@ -433,7 +483,7 @@
           year,
           category,
           notes,
-          photos: currentPhotosBase64
+          photos: [...currentPhotosBase64]
         });
       }
 
@@ -452,9 +502,9 @@
       document.getElementById('teaCategory').value = tea.category;
       document.getElementById('teaNotes').value = tea.notes;
 
-      currentPhotosBase64 = tea.photos || (tea.photo ? [tea.photo] : []);
-      const previewGrid = document.getElementById('previewGrid');
-      previewGrid.innerHTML = currentPhotosBase64.map(p => `<img src="${p}" class="preview-thumb">`).join('');
+      // Загружаем сохранённые фото чая в массив редактирования
+      currentPhotosBase64 = tea.photos ? [...tea.photos] : (tea.photo ? [tea.photo] : []);
+      renderPreviewGrid();
 
       document.getElementById('saveBtn').innerText = 'Зберегти зміни';
       document.getElementById('cancelBtn').style.display = 'block';
