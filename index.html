@@ -25,7 +25,7 @@
       background-color: var(--bg-color);
       color: var(--text-color);
       margin: 0;
-      padding: 16px;
+      padding: 16px 16px 80px 16px; /* Нижній відступ під Bottom Nav */
       box-sizing: border-box;
     }
 
@@ -377,98 +377,208 @@
 
     .modal-arrow.left { left: 10px; }
     .modal-arrow.right { right: 10px; }
+
+    /* НИЖНЯ ПАНЕЛЬ НАВІГАЦІЇ (BOTTOM NAV) */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background-color: #1e1e22;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid var(--border-color);
+      z-index: 9000;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--hint-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 11px;
+      cursor: pointer;
+      width: 50%;
+      padding: 6px 0;
+    }
+
+    .nav-btn.active {
+      color: var(--accent-color);
+      font-weight: bold;
+    }
+
+    .nav-btn .nav-icon {
+      font-size: 18px;
+      margin-bottom: 2px;
+    }
+
+    /* ПУБЛІЧНІ ВІДГУКИ */
+    .review-item {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .review-author {
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--accent-color);
+      display: flex;
+      justify-content: space-between;
+    }
+    .review-text {
+      font-size: 12px;
+      color: var(--text-color);
+      margin-top: 4px;
+    }
+    .review-form-box {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border-color);
+    }
   </style>
 </head>
 <body>
 
-  <h2>🍵 Чайний Склад</h2>
+  <div id="tabMyCollection">
+    <h2>🍵 Чайний Склад</h2>
 
-  <div class="form-group">
-    <label>Назва чаю</label>
-    <input type="text" id="teaName" placeholder="наприклад: Да Хун Пао">
-  </div>
-
-  <div style="display: flex; gap: 10px;">
-    <div class="form-group" style="flex: 1;">
-      <label>Рік</label>
-      <input type="number" id="teaYear" value="2024">
+    <div class="form-group">
+      <label>Назва чаю</label>
+      <input type="text" id="teaName" placeholder="наприклад: Да Хун Пао">
     </div>
-    <div class="form-group" style="flex: 1;">
-      <label>Категорія</label>
-      <select id="teaCategory">
-        <option value="Шу Пуер">Шу Пуер</option>
-        <option value="Шен Пуер">Шен Пуер</option>
-        <option value="Улун">Улун</option>
-        <option value="Червоний чай">Червоний чай</option>
-        <option value="Зелений чай">Зелений чай</option>
-        <option value="Білий чай">Білий чай</option>
-        <option value="Жовтий чай">Жовтий чай</option>
-        <option value="Хей Ча (Чорний)">Хей Ча (Чорний)</option>
-        <option value="Я Бао (Бруньки)">Я Бао (Бруньки)</option>
-      </select>
-    </div>
-  </div>
 
-  <!-- РЕЙТИНГ -->
-  <div class="form-group">
-    <label>Загальна оцінка</label>
-    <div class="rating-select" id="ratingSelect"></div>
-  </div>
-
-  <!-- ОРГАНОЛЕПТИЧНИЙ ПРОФІЛЬ -->
-  <div class="form-group">
-    <label>📊 Вкусовий профіль та Ча Ци</label>
-    <div class="profile-box">
-      <div class="slider-item">
-        <div class="slider-header"><span>🟧 Щільність (Тіло):</span><b id="valBody">3/5</b></div>
-        <input type="range" id="sliderBody" min="1" max="5" value="3" oninput="document.getElementById('valBody').innerText = this.value + '/5'">
+    <div style="display: flex; gap: 10px;">
+      <div class="form-group" style="flex: 1;">
+        <label>Рік</label>
+        <input type="number" id="teaYear" value="2024">
       </div>
-      <div class="slider-item">
-        <div class="slider-header"><span>🟫 Обсмажка (Хуо Хо):</span><b id="valRoast">3/5</b></div>
-        <input type="range" id="sliderRoast" min="1" max="5" value="3" oninput="document.getElementById('valRoast').innerText = this.value + '/5'">
-      </div>
-      <div class="slider-item">
-        <div class="slider-header"><span>🌸 Квітковість / Аромат:</span><b id="valFloral">3/5</b></div>
-        <input type="range" id="sliderFloral" min="1" max="5" value="3" oninput="document.getElementById('valFloral').innerText = this.value + '/5'">
-      </div>
-      <div class="slider-item">
-        <div class="slider-header"><span>🍯 Солодкість:</span><b id="valSweet">3/5</b></div>
-        <input type="range" id="sliderSweet" min="1" max="5" value="3" oninput="document.getElementById('valSweet').innerText = this.value + '/5'">
-      </div>
-
-      <div style="margin-top: 10px;">
-        <label style="font-size: 10px; margin-bottom: 3px;">💨 Чайний стан (Ча Ци)</label>
-        <select id="teaState">
-          <option value="🧘‍♂️ Умиротворення / Медитативне">🧘‍♂️ Умиротворення / Медитативне</option>
-          <option value="⚡️ Бадьорість / Тонус">⚡️ Бадьорість / Тонус</option>
-          <option value="🧠 Глибокий фокус / Ясність">🧠 Глибокий фокус / Ясність</option>
-          <option value="🛋 Затишок / Релакс">🛋 Затишок / Релакс</option>
-          <option value="✨ Легкість / Сонячний настрій">✨ Легкість / Сонячний настрій</option>
+      <div class="form-group" style="flex: 1;">
+        <label>Категорія</label>
+        <select id="teaCategory">
+          <option value="Шу Пуер">Шу Пуер</option>
+          <option value="Шен Пуер">Шен Пуер</option>
+          <option value="Улун">Улун</option>
+          <option value="Червоний чай">Червоний чай</option>
+          <option value="Зелений чай">Зелений чай</option>
+          <option value="Білий чай">Білий чай</option>
+          <option value="Жовтий чай">Жовтий чай</option>
+          <option value="Хей Ча (Чорний)">Хей Ча (Чорний)</option>
+          <option value="Я Бао (Бруньки)">Я Бао (Бруньки)</option>
         </select>
       </div>
     </div>
+
+    <div class="form-group">
+      <label>Загальна оцінка</label>
+      <div class="rating-select" id="ratingSelect"></div>
+    </div>
+
+    <div class="form-group">
+      <label>📊 Вкусовий профіль та Ча Ци</label>
+      <div class="profile-box">
+        <div class="slider-item">
+          <div class="slider-header"><span>🟧 Щільність (Тіло):</span><b id="valBody">3/5</b></div>
+          <input type="range" id="sliderBody" min="1" max="5" value="3" oninput="document.getElementById('valBody').innerText = this.value + '/5'">
+        </div>
+        <div class="slider-item">
+          <div class="slider-header"><span>🟫 Обсмажка (Хуо Хо):</span><b id="valRoast">3/5</b></div>
+          <input type="range" id="sliderRoast" min="1" max="5" value="3" oninput="document.getElementById('valRoast').innerText = this.value + '/5'">
+        </div>
+        <div class="slider-item">
+          <div class="slider-header"><span>🌸 Квітковість / Аромат:</span><b id="valFloral">3/5</b></div>
+          <input type="range" id="sliderFloral" min="1" max="5" value="3" oninput="document.getElementById('valFloral').innerText = this.value + '/5'">
+        </div>
+        <div class="slider-item">
+          <div class="slider-header"><span>🍯 Солодкість:</span><b id="valSweet">3/5</b></div>
+          <input type="range" id="sliderSweet" min="1" max="5" value="3" oninput="document.getElementById('valSweet').innerText = this.value + '/5'">
+        </div>
+
+        <div style="margin-top: 10px;">
+          <label style="font-size: 10px; margin-bottom: 3px;">💨 Чайний стан (Ча Ци)</label>
+          <select id="teaState">
+            <option value="🧘‍♂️ Умиротворення / Медитативне">🧘‍♂️ Умиротворення / Медитативне</option>
+            <option value="⚡️ Бадьорість / Тонус">⚡️ Бадьорість / Тонус</option>
+            <option value="🧠 Глибокий фокус / Ясність">🧠 Глибокий фокус / Ясність</option>
+            <option value="🛋 Затишок / Релакс">🛋 Затишок / Релакс</option>
+            <option value="✨ Легкість / Сонячний настрій">✨ Легкість / Сонячний настрій</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Фотографії (до 6 шт)</label>
+      <input type="file" id="teaPhotos" accept="image/*" multiple>
+      <div class="photo-preview-grid" id="previewGrid"></div>
+    </div>
+
+    <div class="form-group">
+      <label>Враження після чаювання</label>
+      <textarea id="teaNotes" rows="3" placeholder="Опиши смак, аромат, посуд..."></textarea>
+    </div>
+
+    <button class="btn" id="saveBtn" onclick="saveTeaHandler()">Додати до колекції</button>
+    <button class="btn btn-cancel" id="cancelBtn" onclick="resetForm()" style="display: none; margin-top: 6px;">Скасувати редагування</button>
+
+    <div class="category-filters" id="categoryFilters"></div>
+    <div class="tea-list" id="teaList"></div>
   </div>
 
-  <div class="form-group">
-    <label>Фотографії (до 6 шт)</label>
-    <input type="file" id="teaPhotos" accept="image/*" multiple>
-    <div class="photo-preview-grid" id="previewGrid"></div>
+  <div id="tabCatalog" style="display: none;">
+    <h2>⭐ Каталог та Відгуки спільноти</h2>
+    <p style="font-size: 12px; color: var(--hint-color); margin-top: -8px;">Тут зібрані чаї для спільного оцінювання та обговорення.</p>
+
+    <div id="adminCatalogForm" style="display: none; background: var(--card-bg); padding: 14px; border-radius: 12px; border: 1px dashed var(--accent-color); margin-bottom: 16px;">
+      <h3 style="margin-top: 0; font-size: 15px; color: var(--accent-color);">👑 Панель Адміна: Додати чай у каталог</h3>
+      
+      <div class="form-group">
+        <label>Назва чаю</label>
+        <input type="text" id="catTeaName" placeholder="наприклад: Палацовий Шу Пуер 2018">
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <div class="form-group" style="flex: 1;">
+          <label>Рік</label>
+          <input type="number" id="catTeaYear" value="2024">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label>Категорія</label>
+          <select id="catTeaCategory">
+            <option value="Шу Пуер">Шу Пуер</option>
+            <option value="Шен Пуер">Шен Пуер</option>
+            <option value="Улун">Улун</option>
+            <option value="Червоний чай">Червоний чай</option>
+            <option value="Зелений чай">Зелений чай</option>
+            <option value="Білий чай">Білий чай</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Опис для каталогу</label>
+        <textarea id="catTeaNotes" rows="2" placeholder="Опис чаю від адміна..."></textarea>
+      </div>
+      <button class="btn" onclick="addCatalogTeaByAdmin()">Опублікувати в каталог</button>
+    </div>
+
+    <div class="tea-list" id="catalogList"></div>
   </div>
 
-  <div class="form-group">
-    <label>Враження після чаювання</label>
-    <textarea id="teaNotes" rows="3" placeholder="Опиши смак, аромат, посуд..."></textarea>
-  </div>
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="btnTabMy" onclick="switchTab('my')">
+      <span class="nav-icon">🍃</span>
+      <span>Мій чай</span>
+    </button>
+    <button class="nav-btn" id="btnTabCatalog" onclick="switchTab('catalog')">
+      <span class="nav-icon">⭐</span>
+      <span>Каталог та Відгуки</span>
+    </button>
+  </nav>
 
-  <button class="btn" id="saveBtn" onclick="saveTeaHandler()">Додати до колекції</button>
-  <button class="btn btn-cancel" id="cancelBtn" onclick="resetForm()" style="display: none; margin-top: 6px;">Скасувати редагування</button>
-
-  <!-- ФІЛЬТРИ -->
-  <div class="category-filters" id="categoryFilters"></div>
-
-  <div class="tea-list" id="teaList"></div>
-
-  <!-- ПОЛНОЭКРАННЫЙ ПРОСМОТРЩИК (MODAL) -->
   <div class="photo-modal" id="photoModal">
     <div class="photo-modal-header">
       <span id="modalCounter">1 / 1</span>
@@ -485,6 +595,9 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
+    // 🔴 УКАЖИ ЗДЕСЬ СВОЙ TELEGRAM ID
+    const ADMIN_TELEGRAM_ID = 770549804; 
+
     const categoriesList = [
       "Шу Пуер", "Шен Пуер", "Улун", 
       "Червоний чай", "Зелений чай", "Білий чай", 
@@ -492,6 +605,7 @@
     ];
 
     let teas = [];
+    let catalogTeas = [];
     let currentPhotosBase64 = [];
     let currentRating = 8;
     let editingId = null;
@@ -501,6 +615,34 @@
     let activeGalleryPhotos = [];
     let activePhotoIndex = 0;
     let touchStartX = 0;
+
+    // ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+    function switchTab(tab) {
+      const myTab = document.getElementById('tabMyCollection');
+      const catTab = document.getElementById('tabCatalog');
+      const btnMy = document.getElementById('btnTabMy');
+      const btnCat = document.getElementById('btnTabCatalog');
+
+      if (tab === 'my') {
+        myTab.style.display = 'block';
+        catTab.style.display = 'none';
+        btnMy.classList.add('active');
+        btnCat.classList.remove('active');
+      } else {
+        myTab.style.display = 'none';
+        catTab.style.display = 'block';
+        btnMy.classList.remove('active');
+        btnCat.classList.add('active');
+        renderCatalog();
+      }
+    }
+
+    function checkAdminStatus() {
+      const user = tg.initDataUnsafe?.user;
+      if (user && user.id === ADMIN_TELEGRAM_ID) {
+        document.getElementById('adminCatalogForm').style.display = 'block';
+      }
+    }
 
     function initRatingStars() {
       const container = document.getElementById('ratingSelect');
@@ -536,50 +678,33 @@
         try { teas = JSON.parse(localData); } catch(e) {}
       }
 
-      if (tg.CloudStorage) {
-        tg.CloudStorage.getItem('my_teas_cloud_v7', (err, value) => {
-          if (!err && value) {
-            try {
-              const cloudTeas = JSON.parse(value);
-              if (cloudTeas && cloudTeas.length > 0) {
-                teas = cloudTeas.map(cTea => {
-                  const match = teas.find(lTea => lTea.id === cTea.id);
-                  return { 
-                    ...cTea, 
-                    photos: (match && match.photos) ? match.photos : [],
-                    rating: cTea.rating || 8,
-                    profile: cTea.profile || { body: 3, roast: 3, floral: 3, sweet: 3, state: '🧘‍♂️ Умиротворення / Медитативне' }
-                  };
-                });
-                localStorage.setItem('my_teas_v7', JSON.stringify(teas));
-              }
-            } catch(e) {}
-          }
-          renderTeas();
-        });
+      const localCatalog = localStorage.getItem('catalog_teas_v1');
+      if (localCatalog) {
+        try { catalogTeas = JSON.parse(localCatalog); } catch(e) {}
       } else {
-        renderTeas();
+        // Демо-чай у каталозі за замовчуванням
+        catalogTeas = [
+          {
+            id: 101,
+            name: "7562 2018 р.",
+            category: "Шу Пуер",
+            year: 2018,
+            notes: "Класичний рецепт Шу Пуера від Menghai Tea Factory.",
+            reviews: []
+          }
+        ];
       }
+
+      renderTeas();
+      checkAdminStatus();
     }
 
     function saveTeasToStorage() {
       localStorage.setItem('my_teas_v7', JSON.stringify(teas));
+    }
 
-      if (tg.CloudStorage) {
-        const cleanTeas = teas.map(t => ({
-          id: t.id,
-          name: t.name,
-          year: t.year,
-          category: t.category,
-          rating: t.rating,
-          profile: t.profile,
-          notes: t.notes
-        }));
-
-        tg.CloudStorage.setItem('my_teas_cloud_v7', JSON.stringify(cleanTeas), (err) => {
-          if (err) console.error("Cloud Storage Error:", err);
-        });
-      }
+    function saveCatalogToStorage() {
+      localStorage.setItem('catalog_teas_v1', JSON.stringify(catalogTeas));
     }
 
     document.getElementById('teaPhotos').addEventListener('change', function(e) {
@@ -599,7 +724,7 @@
           img.src = event.target.result;
           img.onload = function() {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1600; // Высокое разрешение для полноэкранного просмотра
+            const MAX_WIDTH = 1600;
             const scaleFactor = Math.min(1, MAX_WIDTH / img.width);
             canvas.width = img.width * scaleFactor;
             canvas.height = img.height * scaleFactor;
@@ -708,6 +833,107 @@
           </div>
         `;
       });
+    }
+
+    // 🌟 ЛОГІКА КАТАЛОГУ ТА ВІДГУКІВ
+    function addCatalogTeaByAdmin() {
+      const name = document.getElementById('catTeaName').value.trim();
+      const year = document.getElementById('catTeaYear').value;
+      const category = document.getElementById('catTeaCategory').value;
+      const notes = document.getElementById('catTeaNotes').value.trim();
+
+      if (!name) return alert('Введи назву чаю!');
+
+      catalogTeas.unshift({
+        id: Date.now(),
+        name,
+        year,
+        category,
+        notes,
+        reviews: []
+      });
+
+      saveCatalogToStorage();
+      document.getElementById('catTeaName').value = '';
+      document.getElementById('catTeaNotes').value = '';
+      renderCatalog();
+    }
+
+    function renderCatalog() {
+      const list = document.getElementById('catalogList');
+      list.innerHTML = '';
+
+      if (catalogTeas.length === 0) {
+        list.innerHTML = `<p style="text-align: center; color: var(--hint-color); font-size: 13px;">Каталог порожній</p>`;
+        return;
+      }
+
+      catalogTeas.forEach(tea => {
+        const revs = tea.reviews || [];
+        let avgRating = 'Немає оцінок';
+        if (revs.length > 0) {
+          const sum = revs.reduce((acc, r) => acc + r.rating, 0);
+          avgRating = (sum / revs.length).toFixed(1) + ' / 10 (' + revs.length + ' відгуків)';
+        }
+
+        let reviewsHtml = revs.map(r => `
+          <div class="review-item">
+            <div class="review-author">
+              <span>👤 ${r.userName}</span>
+              <span>⭐️ ${r.rating}/10</span>
+            </div>
+            <div class="review-text">${r.text}</div>
+          </div>
+        `).join('');
+
+        list.innerHTML += `
+          <div class="tea-card">
+            <div class="card-header">
+              <span class="tea-title">${tea.name} (${tea.year})</span>
+              <span class="badge">${tea.category}</span>
+            </div>
+            <div class="card-rating">⭐️ Середня оцінка: ${avgRating}</div>
+            <div class="notes-box">${tea.notes || 'Опис відсутній'}</div>
+
+            <div style="margin-top: 10px;">
+              <b style="font-size: 13px;">💬 Відгуки спільноти:</b>
+              ${reviewsHtml || '<p style="font-size: 12px; color: var(--hint-color);">Поки немає відгуків. Будь першим!</p>'}
+            </div>
+
+            <div class="review-form-box">
+              <label>Написати свій відгук:</label>
+              <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                <input type="number" id="revRating_${tea.id}" min="1" max="10" value="9" style="width: 70px;" placeholder="Оцінка">
+                <input type="text" id="revText_${tea.id}" placeholder="Твій враження про чай..." style="flex: 1;">
+              </div>
+              <button class="btn btn-edit" onclick="addReview(${tea.id})" style="width: 100%;">Надіслати відгук</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function addReview(teaId) {
+      const ratingVal = parseInt(document.getElementById(`revRating_${teaId}`).value);
+      const textVal = document.getElementById(`revText_${teaId}`).value.trim();
+
+      if (!textVal) return alert('Напиши декілька слів у відгуку!');
+
+      const user = tg.initDataUnsafe?.user;
+      const userName = user ? (user.first_name + (user.last_name ? ' ' + user.last_name : '')) : 'Анонім';
+
+      const tea = catalogTeas.find(t => t.id === teaId);
+      if (tea) {
+        if (!tea.reviews) tea.reviews = [];
+        tea.reviews.push({
+          userName,
+          rating: ratingVal || 8,
+          text: textVal,
+          date: new Date().toLocaleDateString()
+        });
+        saveCatalogToStorage();
+        renderCatalog();
+      }
     }
 
     // ЛОГИКА ПРОСМОТРЩИКА ФОТО (MODAL)
