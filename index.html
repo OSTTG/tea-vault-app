@@ -48,7 +48,7 @@
     input:focus, select:focus, textarea:focus { border-color: var(--accent-color); }
     input[type="file"] { padding: 8px; font-size: 12px; }
 
-    /* СТИЛІ РЕЙТИНГУ З ЗІРОЧКАМИ */
+    /* РЕЙТИНГ З ЗІРОЧКАМИ */
     .rating-select {
       display: flex;
       gap: 4px;
@@ -64,13 +64,8 @@
       transition: color 0.15s ease, transform 0.1s ease;
     }
 
-    .star-icon.active {
-      color: var(--star-active);
-    }
-
-    .star-icon:active {
-      transform: scale(1.2);
-    }
+    .star-icon.active { color: var(--star-active); }
+    .star-icon:active { transform: scale(1.2); }
 
     .rating-value-display {
       margin-left: 8px;
@@ -79,11 +74,61 @@
       color: var(--accent-color);
     }
 
+    /* ОРГАНОЛЕПТИЧНИЙ ПРОФІЛЬ (СЛАЙДЕРИ) */
+    .profile-box {
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .slider-item {
+      margin-bottom: 10px;
+    }
+
+    .slider-item:last-child { margin-bottom: 0; }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border-color);
+      outline: none;
+      padding: 0;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-color);
+      cursor: pointer;
+    }
+
     .card-rating {
       font-size: 13px;
       color: var(--star-active);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-weight: 600;
+    }
+
+    .card-profile-summary {
+      font-size: 12px;
+      color: var(--hint-color);
+      background: rgba(0,0,0,0.2);
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      line-height: 1.5;
     }
 
     .btn {
@@ -136,7 +181,7 @@
       border-radius: 8px;
     }
 
-    /* ПРЕВ'Ю ТА ВИДАЛЕННЯ ФОТО */
+    /* ФОТО ПРЕВ'Ю */
     .photo-preview-grid, .card-photo-grid {
       display: flex;
       gap: 8px;
@@ -176,7 +221,7 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
-    /* ФІЛЬТРИ КАТЕГОРІЙ */
+    /* ФІЛЬТРИ */
     .category-filters {
       display: flex;
       gap: 8px;
@@ -263,13 +308,13 @@
 
   <div class="form-group">
     <label>Назва чаю</label>
-    <input type="text" id="teaName" placeholder="наприклад: Менхай 7562">
+    <input type="text" id="teaName" placeholder="наприклад: Да Хун Пао">
   </div>
 
   <div style="display: flex; gap: 10px;">
     <div class="form-group" style="flex: 1;">
       <label>Рік</label>
-      <input type="number" id="teaYear" value="2023">
+      <input type="number" id="teaYear" value="2024">
     </div>
     <div class="form-group" style="flex: 1;">
       <label>Категорія</label>
@@ -287,11 +332,43 @@
     </div>
   </div>
 
-  <!-- РЕЙТИНГ ЧАЮ -->
+  <!-- РЕЙТИНГ -->
   <div class="form-group">
-    <label>Оцінка (Рейтинг)</label>
-    <div class="rating-select" id="ratingSelect">
-      <!-- Зірочки будуть згенеровані через JS -->
+    <label>Загальна оцінка</label>
+    <div class="rating-select" id="ratingSelect"></div>
+  </div>
+
+  <!-- ОРГАНОЛЕПТИЧНИЙ ПРОФІЛЬ -->
+  <div class="form-group">
+    <label>📊 Вкусовий профіль та Ча Ци</label>
+    <div class="profile-box">
+      <div class="slider-item">
+        <div class="slider-header"><span>🟧 Щільність (Тіло):</span><b id="valBody">3/5</b></div>
+        <input type="range" id="sliderBody" min="1" max="5" value="3" oninput="document.getElementById('valBody').innerText = this.value + '/5'">
+      </div>
+      <div class="slider-item">
+        <div class="slider-header"><span>🟫 Обсмажка (Хуо Хо):</span><b id="valRoast">3/5</b></div>
+        <input type="range" id="sliderRoast" min="1" max="5" value="3" oninput="document.getElementById('valRoast').innerText = this.value + '/5'">
+      </div>
+      <div class="slider-item">
+        <div class="slider-header"><span>🌸 Квітковість / Аромат:</span><b id="valFloral">3/5</b></div>
+        <input type="range" id="sliderFloral" min="1" max="5" value="3" oninput="document.getElementById('valFloral').innerText = this.value + '/5'">
+      </div>
+      <div class="slider-item">
+        <div class="slider-header"><span>🍯 Солодкість:</span><b id="valSweet">3/5</b></div>
+        <input type="range" id="sliderSweet" min="1" max="5" value="3" oninput="document.getElementById('valSweet').innerText = this.value + '/5'">
+      </div>
+
+      <div style="margin-top: 10px;">
+        <label style="font-size: 10px; margin-bottom: 3px;">💨 Чайний стан (Ча Ци)</label>
+        <select id="teaState">
+          <option value="🧘‍♂️ Умиротворення / Медитативне">🧘‍♂️ Умиротворення / Медитативне</option>
+          <option value="⚡️ Бадьорість / Тонус">⚡️ Бадьорість / Тонус</option>
+          <option value="🧠 Глибокий фокус / Ясність">🧠 Глибокий фокус / Ясність</option>
+          <option value="🛋 Затишок / Релакс">🛋 Затишок / Релакс</option>
+          <option value="✨ Легкість / Сонячний настрій">✨ Легкість / Сонячний настрій</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -303,13 +380,13 @@
 
   <div class="form-group">
     <label>Враження після чаювання</label>
-    <textarea id="teaNotes" rows="3" placeholder="Опиши смак, аромат, стан, посуд..."></textarea>
+    <textarea id="teaNotes" rows="3" placeholder="Опиши смак, аромат, посуд..."></textarea>
   </div>
 
   <button class="btn" id="saveBtn" onclick="saveTeaHandler()">Додати до колекції</button>
   <button class="btn btn-cancel" id="cancelBtn" onclick="resetForm()" style="display: none; margin-top: 6px;">Скасувати редагування</button>
 
-  <!-- ФІЛЬТРИ КАТЕГОРІЙ -->
+  <!-- ФІЛЬТРИ -->
   <div class="category-filters" id="categoryFilters"></div>
 
   <div class="tea-list" id="teaList"></div>
@@ -326,11 +403,10 @@
 
     let teas = [];
     let currentPhotosBase64 = [];
-    let currentRating = 10; // Оцінка за замовчуванням
+    let currentRating = 8;
     let editingId = null;
     let selectedCategory = "Все";
 
-    // Ініціалізація вибору оцінки зірочками (від 1 до 10)
     function initRatingStars() {
       const container = document.getElementById('ratingSelect');
       container.innerHTML = '';
@@ -353,14 +429,21 @@
       document.getElementById('ratingValueDisplay').innerText = `${val} з 10`;
     }
 
+    // Хелпер створення графічного індикатора из эмодзи-квадратов (напр. 4 -> ▮▮▮▮▯)
+    function makeBar(val) {
+      const filled = '▮'.repeat(val);
+      const empty = '▯'.repeat(5 - val);
+      return `${filled}${empty} (${val}/5)`;
+    }
+
     function loadTeas() {
-      const localData = localStorage.getItem('my_teas_v6');
+      const localData = localStorage.getItem('my_teas_v7');
       if (localData) {
         try { teas = JSON.parse(localData); } catch(e) {}
       }
 
       if (tg.CloudStorage) {
-        tg.CloudStorage.getItem('my_teas_cloud_v6', (err, value) => {
+        tg.CloudStorage.getItem('my_teas_cloud_v7', (err, value) => {
           if (!err && value) {
             try {
               const cloudTeas = JSON.parse(value);
@@ -369,11 +452,12 @@
                   const match = teas.find(lTea => lTea.id === cTea.id);
                   return { 
                     ...cTea, 
-                    photos: (match && match.photos) ? match.photos : (match && match.photo ? [match.photo] : []),
-                    rating: cTea.rating || (match ? match.rating : 10)
+                    photos: (match && match.photos) ? match.photos : [],
+                    rating: cTea.rating || 8,
+                    profile: cTea.profile || { body: 3, roast: 3, floral: 3, sweet: 3, state: '🧘‍♂️ Умиротворення / Медитативне' }
                   };
                 });
-                localStorage.setItem('my_teas_v6', JSON.stringify(teas));
+                localStorage.setItem('my_teas_v7', JSON.stringify(teas));
               }
             } catch(e) {}
           }
@@ -385,7 +469,7 @@
     }
 
     function saveTeasToStorage() {
-      localStorage.setItem('my_teas_v6', JSON.stringify(teas));
+      localStorage.setItem('my_teas_v7', JSON.stringify(teas));
 
       if (tg.CloudStorage) {
         const cleanTeas = teas.map(t => ({
@@ -394,11 +478,12 @@
           year: t.year,
           category: t.category,
           rating: t.rating,
+          profile: t.profile,
           notes: t.notes
         }));
 
-        tg.CloudStorage.setItem('my_teas_cloud_v6', JSON.stringify(cleanTeas), (err) => {
-          if (err) console.error("Помилка Cloud Storage:", err);
+        tg.CloudStorage.setItem('my_teas_cloud_v7', JSON.stringify(cleanTeas), (err) => {
+          if (err) console.error("Cloud Storage Error:", err);
         });
       }
     }
@@ -408,14 +493,12 @@
       const availableSlots = 6 - currentPhotosBase64.length;
 
       if (availableSlots <= 0) {
-        alert('Максимум 6 фотографий!');
+        alert('Максимум 6 фотографій!');
         this.value = '';
         return;
       }
 
-      const filesToProcess = files.slice(0, availableSlots);
-
-      filesToProcess.forEach(file => {
+      files.slice(0, availableSlots).forEach(file => {
         const reader = new FileReader();
         reader.onload = function(event) {
           const img = new Image();
@@ -443,7 +526,6 @@
     function renderPreviewGrid() {
       const previewGrid = document.getElementById('previewGrid');
       previewGrid.innerHTML = '';
-
       currentPhotosBase64.forEach((photoBase64, index) => {
         previewGrid.innerHTML += `
           <div class="preview-thumb-wrapper">
@@ -465,17 +547,13 @@
 
       const allCount = teas.length;
       const allActive = selectedCategory === "Все" ? "active" : "";
-      filtersContainer.innerHTML += `
-        <div class="filter-chip ${allActive}" onclick="setFilter('Все')">Все (${allCount})</div>
-      `;
+      filtersContainer.innerHTML += `<div class="filter-chip ${allActive}" onclick="setFilter('Все')">Все (${allCount})</div>`;
 
       categoriesList.forEach(cat => {
         const count = teas.filter(t => t.category === cat).length;
         if (count > 0 || selectedCategory === cat) {
           const activeClass = selectedCategory === cat ? "active" : "";
-          filtersContainer.innerHTML += `
-            <div class="filter-chip ${activeClass}" onclick="setFilter('${cat}')">${cat} (${count})</div>
-          `;
+          filtersContainer.innerHTML += `<div class="filter-chip ${activeClass}" onclick="setFilter('${cat}')">${cat} (${count})</div>`;
         }
       });
     }
@@ -487,7 +565,6 @@
 
     function renderTeas() {
       renderFilters();
-
       const list = document.getElementById('teaList');
       list.innerHTML = '';
 
@@ -496,15 +573,12 @@
         : teas.filter(t => t.category === selectedCategory);
 
       if (filteredTeas.length === 0) {
-        const emptyMsg = selectedCategory === "Все"
-          ? 'Колекція порожня. Додай свій перший чай!'
-          : `У категорії "${selectedCategory}" поки немає чаїв.`;
-        list.innerHTML = `<p style="text-align: center; color: var(--hint-color); font-size: 13px; margin-top: 30px;">${emptyMsg}</p>`;
+        list.innerHTML = `<p style="text-align: center; color: var(--hint-color); font-size: 13px; margin-top: 30px;">Колекція порожня</p>`;
         return;
       }
 
       filteredTeas.forEach((tea) => {
-        const photoList = tea.photos || (tea.photo ? [tea.photo] : []);
+        const photoList = tea.photos || [];
         let galleryHtml = '';
         if (photoList.length > 0) {
           galleryHtml = `<div class="card-photo-grid">` + 
@@ -512,7 +586,7 @@
             `</div>`;
         }
 
-        const ratingVal = tea.rating || 10;
+        const prof = tea.profile || { body: 3, roast: 3, floral: 3, sweet: 3, state: '🧘‍♂️ Умиротворення' };
 
         list.innerHTML += `
           <div class="tea-card">
@@ -520,7 +594,16 @@
               <span class="tea-title">${tea.name} (${tea.year})</span>
               <span class="badge">${tea.category}</span>
             </div>
-            <div class="card-rating">⭐️ Оцінка: ${ratingVal} з 10</div>
+            <div class="card-rating">⭐️ Оцінка: ${tea.rating || 8} з 10</div>
+            
+            <div class="card-profile-summary">
+              🟧 Щільність: ${makeBar(prof.body)}<br>
+              🟫 Обсмажка: ${makeBar(prof.roast)}<br>
+              🌸 Аромат: ${makeBar(prof.floral)}<br>
+              🍯 Солодкість: ${makeBar(prof.sweet)}<br>
+              💨 Стан: ${prof.state}
+            </div>
+
             ${galleryHtml}
             <div class="notes-box">${tea.notes || 'Без опису'}</div>
             <div class="card-actions">
@@ -539,6 +622,14 @@
       const category = document.getElementById('teaCategory').value;
       const notes = document.getElementById('teaNotes').value.trim();
 
+      const profile = {
+        body: parseInt(document.getElementById('sliderBody').value),
+        roast: parseInt(document.getElementById('sliderRoast').value),
+        floral: parseInt(document.getElementById('sliderFloral').value),
+        sweet: parseInt(document.getElementById('sliderSweet').value),
+        state: document.getElementById('teaState').value
+      };
+
       if (!name) return alert('Будь ласка, введи назву чаю!');
 
       if (editingId) {
@@ -548,6 +639,7 @@
           teas[index].year = year;
           teas[index].category = category;
           teas[index].rating = currentRating;
+          teas[index].profile = profile;
           teas[index].notes = notes;
           teas[index].photos = [...currentPhotosBase64];
         }
@@ -558,6 +650,7 @@
           year,
           category,
           rating: currentRating,
+          profile,
           notes,
           photos: [...currentPhotosBase64]
         });
@@ -578,9 +671,20 @@
       document.getElementById('teaCategory').value = tea.category;
       document.getElementById('teaNotes').value = tea.notes;
 
-      setRating(tea.rating || 10);
+      setRating(tea.rating || 8);
 
-      currentPhotosBase64 = tea.photos ? [...tea.photos] : (tea.photo ? [tea.photo] : []);
+      const prof = tea.profile || { body: 3, roast: 3, floral: 3, sweet: 3, state: '🧘‍♂️ Умиротворення / Медитативне' };
+      document.getElementById('sliderBody').value = prof.body;
+      document.getElementById('valBody').innerText = prof.body + '/5';
+      document.getElementById('sliderRoast').value = prof.roast;
+      document.getElementById('valRoast').innerText = prof.roast + '/5';
+      document.getElementById('sliderFloral').value = prof.floral;
+      document.getElementById('valFloral').innerText = prof.floral + '/5';
+      document.getElementById('sliderSweet').value = prof.sweet;
+      document.getElementById('valSweet').innerText = prof.sweet + '/5';
+      document.getElementById('teaState').value = prof.state;
+
+      currentPhotosBase64 = tea.photos ? [...tea.photos] : [];
       renderPreviewGrid();
 
       document.getElementById('saveBtn').innerText = 'Зберегти зміни';
@@ -596,7 +700,16 @@
       document.getElementById('teaPhotos').value = '';
       document.getElementById('previewGrid').innerHTML = '';
       currentPhotosBase64 = [];
-      setRating(10);
+      setRating(8);
+
+      document.getElementById('sliderBody').value = 3;
+      document.getElementById('valBody').innerText = '3/5';
+      document.getElementById('sliderRoast').value = 3;
+      document.getElementById('valRoast').innerText = '3/5';
+      document.getElementById('sliderFloral').value = 3;
+      document.getElementById('valFloral').innerText = '3/5';
+      document.getElementById('sliderSweet').value = 3;
+      document.getElementById('valSweet').innerText = '3/5';
 
       document.getElementById('saveBtn').innerText = 'Додати до колекції';
       document.getElementById('cancelBtn').style.display = 'none';
@@ -616,14 +729,22 @@
       if (!tea) return;
 
       const categoryTag = tea.category.replace(/\s+/g, '_');
-      const ratingVal = tea.rating || 10;
+      const ratingVal = tea.rating || 8;
+      const prof = tea.profile || { body: 3, roast: 3, floral: 3, sweet: 3, state: '🧘‍♂️ Умиротворення / Медитативне' };
       
       let cardText = `🍃 ${tea.name.toUpperCase()} (${tea.year} р.)\n`;
       cardText += `━━━━━━━━━━━━━━━━━━\n`;
       cardText += `🏷 Категорія: #${categoryTag}\n`;
-      cardText += `⭐️ Оцінка: ${ratingVal} з 10\n`;
+      cardText += `⭐️ Оцінка: ${ratingVal} з 10\n\n`;
+      cardText += `📊 Вкусовий профіль:\n`;
+      cardText += `🟧 Щільність: ${makeBar(prof.body)}\n`;
+      cardText += `🟫 Обсмажка (Хуо Хо): ${makeBar(prof.roast)}\n`;
+      cardText += `🌸 Квітковість: ${makeBar(prof.floral)}\n`;
+      cardText += `🍯 Солодкість: ${makeBar(prof.sweet)}\n`;
+      cardText += `💨 Чайний стан (Ча Ци): ${prof.state}\n`;
+
       if (tea.notes) {
-        cardText += `📝 Враження:\n${tea.notes}\n`;
+        cardText += `\n📝 Враження:\n${tea.notes}\n`;
       }
       cardText += `━━━━━━━━━━━━━━━━━━\n`;
       cardText += `📌 Чайний Склад`;
