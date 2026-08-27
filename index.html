@@ -1,545 +1,390 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Чайный Склад</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Чайний Каталог</title>
+  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  
   <style>
     :root {
-      --bg-color: #0d0d0e;
-      --card-bg: #161618;
-      --input-bg: #1f1f22;
-      --border-color: #2c2c30;
-      --text-color: #ededed;
-      --hint-color: #8e8e93;
-      --accent-color: #3a86ff;
-      --accent-hover: #2563eb;
-      --star-active: #ffd60a;
-      --star-inactive: #2c2c30;
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #ffffff;
+      --accent-color: #4CAF50;
+      --danger-color: #ff4d4d;
+      --input-bg: #2d2d2d;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-color);
       color: var(--text-color);
       margin: 0;
-      padding: 16px 16px 80px 16px;
-      box-sizing: border-box;
+      padding: 15px;
+      padding-bottom: 80px;
     }
 
-    h2 { margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 700; }
-    .form-group { margin-bottom: 14px; }
-    label { display: block; font-size: 11px; color: var(--hint-color); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border-color);
-      background-color: var(--input-bg);
-      color: var(--text-color);
-      box-sizing: border-box;
-      font-size: 14px;
-      outline: none;
+    h2, h3 {
+      margin-top: 0;
     }
 
-    input:focus, select:focus, textarea:focus { border-color: var(--accent-color); }
-
-    .file-input-btn {
-      display: inline-block;
-      width: 100%;
-      padding: 12px;
-      background: var(--input-bg);
-      border: 1px dashed var(--border-color);
-      border-radius: 10px;
-      text-align: center;
-      color: var(--hint-color);
-      font-size: 13px;
-      cursor: pointer;
-      box-sizing: border-box;
-    }
-
-    .rating-select {
+    /* Табы (Навигация) */
+    .tabs {
       display: flex;
-      gap: 4px;
-      align-items: center;
-      user-select: none;
-      margin-top: 4px;
+      gap: 10px;
+      margin-bottom: 20px;
     }
 
-    .star-icon {
-      font-size: 22px;
-      color: var(--star-inactive);
-      cursor: pointer;
-    }
-
-    .star-icon.active { color: var(--star-active); }
-
-    .btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 10px;
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
       border: none;
-      background-color: var(--accent-color);
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 15px;
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      font-weight: bold;
+      border-radius: 10px;
       cursor: pointer;
-      margin-top: 6px;
+      transition: background-color 0.2s;
     }
 
-    .btn:active { background-color: var(--accent-hover); }
+    .tab-btn.active {
+      background-color: var(--accent-color);
+    }
 
-    .btn-edit {
-      background: var(--input-bg);
-      color: var(--text-color);
-      border: 1px solid var(--border-color);
-      padding: 8px 12px;
-      font-size: 12px;
-      cursor: pointer;
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Панель Админа */
+    .admin-panel {
+      background-color: var(--card-bg);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      border: 1px solid #333;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+      color: #aaa;
+    }
+
+    input[type="text"],
+    input[type="url"],
+    textarea,
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      background-color: var(--input-bg);
+      border: 1px solid #444;
       border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* Карточки Каталога */
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 15px;
     }
 
     .tea-card {
       background-color: var(--card-bg);
       border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 14px;
-      border: 1px solid var(--border-color);
+      padding: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
 
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .badge {
-      background: var(--input-bg);
-      color: var(--hint-color);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 500;
-      border: 1px solid var(--border-color);
-    }
-
-    .notes-box {
-      background: rgba(255, 255, 255, 0.03);
-      border-left: 3px solid var(--accent-color);
-      padding: 8px 10px;
-      margin-top: 8px;
-      font-size: 13px;
-      border-radius: 0 8px 8px 0;
-    }
-
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background-color: #121214;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      border-top: 1px solid var(--border-color);
-      z-index: 9000;
-    }
-
-    .nav-btn {
-      background: none;
-      border: none;
-      color: var(--hint-color);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-size: 11px;
-      cursor: pointer;
-      width: 50%;
-    }
-
-    .nav-btn.active {
-      color: var(--text-color);
-      font-weight: bold;
-    }
-
-    .review-item {
-      background: var(--input-bg);
+    .tea-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
       border-radius: 8px;
-      padding: 10px;
-      margin-top: 8px;
-      border: 1px solid var(--border-color);
-    }
-
-    .photo-grid {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
       margin-bottom: 10px;
     }
 
-    .card-photo-thumb {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-      flex-shrink: 0;
+    .tea-price {
+      color: var(--accent-color);
+      font-weight: bold;
+      font-size: 16px;
     }
 
-    .status-msg {
-      padding: 12px;
-      font-size: 13px;
-      text-align: center;
-      color: var(--hint-color);
+    .admin-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
     }
+
+    .btn-edit, .btn-delete {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-edit { background-color: #ff9800; color: white; }
+    .btn-delete { background-color: var(--danger-color); color: white; }
   </style>
 </head>
 <body>
 
-  <!-- ВКЛАДКА: МОЯ КОЛЛЕКЦИЯ -->
-  <div id="tabMyCollection">
-    <h2>☕ Личная коллекция</h2>
-
-    <div class="form-group">
-      <label>Название чая</label>
-      <input type="text" id="teaName" placeholder="например: Да Хун Пао">
-    </div>
-
-    <div style="display: flex; gap: 10px;">
-      <div class="form-group" style="flex: 1;">
-        <label>Год</label>
-        <input type="number" id="teaYear" value="2024">
-      </div>
-      <div class="form-group" style="flex: 1;">
-        <label>Категория</label>
-        <select id="teaCategory">
-          <option value="Шу Пуэр">Шу Пуэр</option>
-          <option value="Шен Пуер">Шен Пуэр</option>
-          <option value="Улун">Улун</option>
-          <option value="Красный чай">Красный чай</option>
-          <option value="Зелёный чай">Зелёный чай</option>
-          <option value="Белый чай">Белый чай</option>
-          <option value="Жёлтый чай">Жёлтый чай</option>
-          <option value="Хей Ча (Чёрный)">Хей Ча (Чёрный)</option>
-          <option value="Я Бао (Почки)">Я Бао (Почки)</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>Оценка</label>
-      <div class="rating-select" id="ratingSelect"></div>
-    </div>
-
-    <div class="form-group">
-      <label>Фотография</label>
-      <label class="file-input-btn">
-        📷 Выбрать фото
-        <input type="file" id="teaPhotos" accept="image/*" multiple style="display: none;">
-      </label>
-      <div id="myPhotoPreview" class="photo-grid" style="margin-top: 8px;"></div>
-    </div>
-
-    <div class="form-group">
-      <label>Заметки / Впечатления</label>
-      <textarea id="teaNotes" rows="3" placeholder="Опиши вкус, аромат, проливы..."></textarea>
-    </div>
-
-    <button class="btn" id="btnSavePersonal">Добавить в личную коллекцию</button>
-
-    <div class="tea-list" id="teaList" style="margin-top: 20px;"></div>
+  <!-- Навигация по вкладкам -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-catalog')">🍵 Каталог</button>
+    <button class="tab-btn" onclick="switchTab('tab-reviews')">💬 Відгуки</button>
   </div>
 
-  <!-- ВКЛАДКА: ОБЩИЙ КАТАЛОГ -->
-  <div id="tabCatalog" style="display: none;">
-    <h2>⭐ Общий Каталог</h2>
-
-    <!-- Форма администратора -->
-    <div id="adminCatalogForm" style="display: none; background: var(--card-bg); padding: 14px; border-radius: 12px; border: 1px solid var(--accent-color); margin-bottom: 16px;">
-      <h3 style="margin-top: 0; font-size: 15px; color: var(--accent-color);">👑 Панель Администратора</h3>
-      <div class="form-group">
-        <label>Название товара</label>
-        <input type="text" id="catTeaName" placeholder="Название чая">
-      </div>
-      <div class="form-group">
-        <label>Категория</label>
-        <select id="catTeaCategory">
-          <option value="Шу Пуэр">Шу Пуэр</option>
-          <option value="Шен Пуер">Шен Пуэр</option>
-          <option value="Улун">Улун</option>
-          <option value="Красный чай">Красный чай</option>
-          <option value="Зелёный чай">Зелёный чай</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Фото товара</label>
-        <label class="file-input-btn">
-          📷 Выбрать фото товара
-          <input type="file" id="catTeaPhotos" accept="image/*" multiple style="display: none;">
-        </label>
-        <div id="catPhotoPreview" class="photo-grid" style="margin-top: 8px;"></div>
-      </div>
-      <button class="btn" type="button" id="btnAddCatalog">Опубликовать в Каталог</button>
+  <!-- Вкладка 1: Каталог -->
+  <div id="tab-catalog" class="tab-content active">
+    
+    <!-- Панель Администратора (Видна только пользователю с ADMIN_TELEGRAM_ID) -->
+    <div id="admin-panel" class="admin-panel" style="display: none;">
+      <h2>👑 Панель Адміна</h2>
+      <form id="add-tea-form">
+        <div class="form-group">
+          <label>Назва чаю:</label>
+          <input type="text" id="tea-name" required placeholder="Наприклад: Шу Пуер 2018">
+        </div>
+        <div class="form-group">
+          <label>Ціна:</label>
+          <input type="text" id="tea-price" required placeholder="Наприклад: 250 грн / 50г">
+        </div>
+        <div class="form-group">
+          <label>Опис:</label>
+          <textarea id="tea-desc" required placeholder="Смакові ноти, походження..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Завантажити фото з пристрою:</label>
+          <input type="file" id="tea-image-file" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label>Або посилання на фото (URL):</label>
+          <input type="url" id="tea-image-url" placeholder="https://...">
+        </div>
+        <button type="submit" id="submit-btn" class="btn-submit">Додати чай</button>
+      </form>
     </div>
 
-    <div id="catalogStatus" class="status-msg">Загрузка каталога...</div>
-    <div class="tea-list" id="catalogList"></div>
+    <!-- Список товаров -->
+    <div id="catalog-list" class="catalog-grid"></div>
   </div>
 
-  <!-- НАВИГАЦИЯ -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" id="btnTabMy">
-      <span>🍃 Личный</span>
-    </button>
-    <button class="nav-btn" id="btnTabCatalog">
-      <span>⭐ Общий Каталог</span>
-    </button>
-  </nav>
+  <!-- Вкладка 2: Отзывы -->
+  <div id="tab-reviews" class="tab-content">
+    <h2>💬 Відгуки покупців</h2>
+    <p>Розділ відгуків у розробці...</p>
+  </div>
 
-  <!-- FIREBASE SCRIPTS -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  <!-- Подключение SDK Firebase (Compat-версия для простой работы через CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
+  <script>
+    // 1. Инициализация Firebase с твоими ключами
     const firebaseConfig = {
       apiKey: "AIzaSyCM1BEHytNhWQ9M7m5VE50ish2_d1X7TTw",
       authDomain: "teacatalog.firebaseapp.com",
+      databaseURL: "https://teacatalog-default-rtdb.firebaseio.com",
       projectId: "teacatalog",
       storageBucket: "teacatalog.firebasestorage.app",
       messagingSenderId: "94786669497",
-      appId: "1:94786669497:web:e970bd462522ddd41d8468",
-      measurementId: "G-CV53Z92DCK"
+      appId: "1:94786669497:web:e970bd462522ddd41d8468"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    const tg = window.Telegram?.WebApp || {};
-    if (tg.ready) tg.ready();
+    // 2. Настройки администратора
+    const ADMIN_TELEGRAM_ID = 770549804;
+    const tg = window.Telegram?.WebApp;
+    if (tg) tg.ready();
 
-    const MY_ADMIN_ID = 770549804;
+    const currentUserId = tg?.initDataUnsafe?.user?.id || ADMIN_TELEGRAM_ID; 
+    const isAdmin = (currentUserId === ADMIN_TELEGRAM_ID);
 
-    let teas = [];
-    let catalogTeas = [];
-    let currentRating = 8;
-    let tempMyPhotos = [];
-    let tempCatPhotos = [];
+    let editingItemId = null;
 
-    // Вкладки
-    window.switchTab = function(tab) {
-      document.getElementById('tabMyCollection').style.display = tab === 'my' ? 'block' : 'none';
-      document.getElementById('tabCatalog').style.display = tab === 'catalog' ? 'block' : 'none';
-      document.getElementById('btnTabMy').classList.toggle('active', tab === 'my');
-      document.getElementById('btnTabCatalog').classList.toggle('active', tab === 'catalog');
-    };
-
-    document.getElementById('btnTabMy').onclick = () => switchTab('my');
-    document.getElementById('btnTabCatalog').onclick = () => switchTab('catalog');
-
-    // Определение админа
-    function checkAdminRights() {
-      const currentUserId = tg.initDataUnsafe?.user?.id;
-      const adminForm = document.getElementById('adminCatalogForm');
-      if (currentUserId && Number(currentUserId) === Number(MY_ADMIN_ID)) {
-        adminForm.style.display = 'block';
-      } else {
-        adminForm.style.display = 'none';
+    // 3. Запуск при загрузке страницы
+    document.addEventListener('DOMContentLoaded', () => {
+      const adminPanel = document.getElementById('admin-panel');
+      if (adminPanel && isAdmin) {
+        adminPanel.style.display = 'block';
       }
+
+      const itemForm = document.getElementById('add-tea-form');
+      if (itemForm) {
+        itemForm.addEventListener('submit', handleFormSubmit);
+      }
+
+      loadItemsFromFirebase();
+    });
+
+    // Переключение вкладок
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
     }
 
-    // Звезды
-    function initRatingStars() {
-      const container = document.getElementById('ratingSelect');
-      container.innerHTML = '';
-      for (let i = 1; i <= 10; i++) {
-        const star = document.createElement('span');
-        star.className = `star-icon ${i <= currentRating ? 'active' : ''}`;
-        star.textContent = '★';
-        star.onclick = () => { currentRating = i; initRatingStars(); };
-        container.appendChild(star);
-      }
-    }
-
-    // Загрузка фото
-    function handleFileSelect(event, type) {
-      const files = Array.from(event.target.files);
-      const targetArr = type === 'my' ? tempMyPhotos : tempCatPhotos;
-      const previewEl = document.getElementById(type === 'my' ? 'myPhotoPreview' : 'catPhotoPreview');
-      
-      files.forEach(file => {
+    // Конвертация файла в Base64
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = function(e) {
-          targetArr.push(e.target.result);
-          previewEl.innerHTML = targetArr.map(src => `<img src="${src}" class="card-photo-thumb" />`).join('');
-        };
         reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
       });
     }
 
-    document.getElementById('teaPhotos').onchange = (e) => handleFileSelect(e, 'my');
-    document.getElementById('catTeaPhotos').onchange = (e) => handleFileSelect(e, 'cat');
+    // Обработка формы (Добавление и Редактирование)
+    async function handleFormSubmit(e) {
+      e.preventDefault();
 
-    // Сохранение личного чая
-    document.getElementById('btnSavePersonal').onclick = function() {
-      const name = document.getElementById('teaName').value.trim();
-      if (!name) return alert('Введите название!');
+      const title = document.getElementById('tea-name').value.trim();
+      const price = document.getElementById('tea-price').value.trim();
+      const description = document.getElementById('tea-desc').value.trim();
+      const fileInput = document.getElementById('tea-image-file');
+      const urlInput = document.getElementById('tea-image-url');
 
-      const newTea = {
-        id: Date.now(),
-        name,
-        year: document.getElementById('teaYear').value,
-        category: document.getElementById('teaCategory').value,
-        rating: currentRating,
-        photos: [...tempMyPhotos],
-        notes: document.getElementById('teaNotes').value.trim()
+      let imageUrl = '';
+
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        imageUrl = await fileToBase64(fileInput.files[0]);
+      } else if (urlInput && urlInput.value.trim()) {
+        imageUrl = urlInput.value.trim();
+      }
+
+      const itemData = {
+        title,
+        price,
+        description,
+        updatedAt: Date.now()
       };
 
-      teas.unshift(newTea);
-      localStorage.setItem('my_private_teas_v5', JSON.stringify(teas));
-      
-      document.getElementById('teaName').value = '';
-      document.getElementById('teaNotes').value = '';
-      tempMyPhotos = [];
-      document.getElementById('myPhotoPreview').innerHTML = '';
-      renderPersonalTeas();
-    };
-
-    function renderPersonalTeas() {
-      const list = document.getElementById('teaList');
-      if (teas.length === 0) {
-        list.innerHTML = '<div class="status-msg">Ваша личная коллекция пуста</div>';
-        return;
+      if (imageUrl) {
+        itemData.image = imageUrl;
       }
-      list.innerHTML = teas.map(tea => `
-        <div class="tea-card">
-          ${tea.photos && tea.photos.length ? `
-            <div class="photo-grid">
-              ${tea.photos.map(p => `<img src="${p}" class="card-photo-thumb" />`).join('')}
-            </div>
-          ` : ''}
-          <div class="card-header">
-            <b>${tea.name} (${tea.year})</b>
-            <span class="badge">${tea.category}</span>
-          </div>
-          <div style="font-size: 13px; color: var(--star-active);">★ ${tea.rating}/10</div>
-          <div class="notes-box">${tea.notes || 'Без описания'}</div>
-        </div>
-      `).join('');
+
+      if (editingItemId) {
+        // Режим редактирования
+        db.ref('catalog/' + editingItemId).update(itemData)
+          .then(() => {
+            alert('Позицію оновлено!');
+            resetForm();
+          })
+          .catch(err => alert('Помилка оновлення: ' + err.message));
+      } else {
+        // Режим добавления
+        if (!imageUrl) itemData.image = 'https://via.placeholder.com/300x200?text=No+Image';
+        db.ref('catalog').push(itemData)
+          .then(() => {
+            alert('Позицію додано в каталог!');
+            resetForm();
+          })
+          .catch(err => alert('Помилка збереження: ' + err.message));
+      }
     }
 
-    // Добавление в Firebase Админом
-    document.getElementById('btnAddCatalog').onclick = async function() {
-      const name = document.getElementById('catTeaName').value.trim();
-      if (!name) return alert('Введите название товара!');
+    function resetForm() {
+      editingItemId = null;
+      document.getElementById('add-tea-form').reset();
+      const submitBtn = document.getElementById('submit-btn');
+      if (submitBtn) submitBtn.textContent = 'Додати чай';
+    }
 
-      try {
-        await addDoc(collection(db, "catalog"), {
-          name,
-          category: document.getElementById('catTeaCategory').value,
-          photos: tempCatPhotos,
-          reviews: [],
-          createdAt: Date.now()
+    // Загрузка товаров из облачной базы данных в реальном времени
+    function loadItemsFromFirebase() {
+      const catalogContainer = document.getElementById('catalog-list');
+
+      db.ref('catalog').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!catalogContainer) return;
+        catalogContainer.innerHTML = '';
+
+        if (!data) {
+          catalogContainer.innerHTML = '<p style="text-align: center; color: #888;">Каталог поки порожній.</p>';
+          return;
+        }
+
+        Object.keys(data).forEach((id) => {
+          const item = data[id];
+          const card = document.createElement('div');
+          card.className = 'tea-card';
+          card.innerHTML = `
+            <img src="${item.image}" alt="${item.title}">
+            <h3>${item.title}</h3>
+            <p class="tea-price">${item.price}</p>
+            <p style="color: #ccc; font-size: 14px; line-height: 1.4;">${item.description}</p>
+            ${isAdmin ? `
+              <div class="admin-actions">
+                <button class="btn-edit" onclick="editItem('${id}')">✏️ Редагувати</button>
+                <button class="btn-delete" onclick="deleteItem('${id}')">🗑 Видалити</button>
+              </div>
+            ` : ''}
+          `;
+          catalogContainer.appendChild(card);
         });
-
-        document.getElementById('catTeaName').value = '';
-        tempCatPhotos = [];
-        document.getElementById('catPhotoPreview').innerHTML = '';
-        alert('Чай успешно выложен!');
-      } catch (e) {
-        alert('Ошибка при публикации: ' + e.message);
-      }
-    };
-
-    // Отправка отзыва
-    window.addReview = async function(docId) {
-      const input = document.getElementById(`rev_${docId}`);
-      const text = input.value.trim();
-      if (!text) return;
-
-      const userName = tg.initDataUnsafe?.user?.first_name || 'Пользователь';
-      const revObj = { user: userName, text: text, time: Date.now() };
-
-      try {
-        const itemRef = doc(db, "catalog", docId);
-        await updateDoc(itemRef, {
-          reviews: arrayUnion(revObj)
-        });
-        input.value = '';
-      } catch (e) {
-        alert('Ошибка отправки отзыва: ' + e.message);
-      }
-    };
-
-    // Чтение Firestore в реальном времени
-    function subscribeToCatalog() {
-      const statusEl = document.getElementById('catalogStatus');
-      
-      onSnapshot(collection(db, "catalog"), (snapshot) => {
-        catalogTeas = [];
-        snapshot.forEach((doc) => {
-          catalogTeas.push({ id: doc.id, ...doc.data() });
-        });
-        
-        // Сортировка по времени на клиенте
-        catalogTeas.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
-        
-        statusEl.style.display = 'none';
-        renderCatalog();
-      }, (error) => {
-        console.error("Firestore error:", error);
-        statusEl.innerHTML = `<b style="color: var(--accent-color);">Ошибка загрузки!</b><br>Проверь правила безопасности Firebase (Rules).<br>Details: ${error.message}`;
       });
     }
 
-    function renderCatalog() {
-      const list = document.getElementById('catalogList');
-      if (catalogTeas.length === 0) {
-        list.innerHTML = '<div class="status-msg">В каталоге пока нет товаров</div>';
-        return;
+    // Функция для подстановки данных в форму при редактировании
+    window.editItem = function(id) {
+      db.ref('catalog/' + id).once('value').then((snapshot) => {
+        const item = snapshot.val();
+        if (!item) return;
+
+        document.getElementById('tea-name').value = item.title || '';
+        document.getElementById('tea-price').value = item.price || '';
+        document.getElementById('tea-desc').value = item.description || '';
+
+        editingItemId = id;
+        const submitBtn = document.getElementById('submit-btn');
+        if (submitBtn) submitBtn.textContent = 'Зберегти зміни';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    };
+
+    // Функция удаления товара
+    window.deleteItem = function(id) {
+      if (confirm('Ви дійсно хочете видалити цю позицію?')) {
+        db.ref('catalog/' + id).remove();
       }
-
-      list.innerHTML = catalogTeas.map(tea => `
-        <div class="tea-card">
-          ${tea.photos && tea.photos.length ? `
-            <div class="photo-grid">
-              ${tea.photos.map(p => `<img src="${p}" class="card-photo-thumb" />`).join('')}
-            </div>
-          ` : ''}
-          <div class="card-header">
-            <b>${tea.name}</b>
-            <span class="badge">${tea.category}</span>
-          </div>
-          <div style="margin-top: 10px;">
-            <b style="font-size: 12px; color: var(--hint-color);">Отзывы:</b>
-            ${(tea.reviews || []).map(r => `
-              <div class="review-item">
-                <b style="font-size: 12px;">${r.user}:</b>
-                <span style="font-size: 13px;">${r.text}</span>
-              </div>
-            `).join('') || '<div style="font-size: 11px; color: var(--hint-color); margin-top: 4px;">Пока нет отзывов</div>'}
-          </div>
-          <div style="margin-top: 10px; display: flex; gap: 6px;">
-            <input type="text" id="rev_${tea.id}" placeholder="Оставить отзыв..." style="padding: 8px; font-size: 13px;">
-            <button class="btn btn-edit" onclick="addReview('${tea.id}')" style="width: auto;">Отправить</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // Старт
-    try {
-      teas = JSON.parse(localStorage.getItem('my_private_teas_v5')) || [];
-    } catch(e) {}
-
-    checkAdminRights();
-    initRatingStars();
-    renderPersonalTeas();
-    subscribeToCatalog();
+    };
   </script>
 </body>
 </html>
