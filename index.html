@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Чайний Склад</title>
-  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Бібліотека для генерації PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   
   <style>
@@ -35,7 +33,6 @@
       color: var(--accent-color);
       font-size: 20px;
       font-weight: 700;
-      letter-spacing: 0.5px;
     }
 
     .form-group { margin-bottom: 14px; }
@@ -46,7 +43,6 @@
       color: var(--hint-color);
       margin-bottom: 5px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
 
     input, select, textarea {
@@ -76,7 +72,6 @@
       font-size: 15px;
       cursor: pointer;
       margin-top: 6px;
-      transition: opacity 0.2s;
     }
 
     .btn:active { opacity: 0.8; }
@@ -93,8 +88,6 @@
       border: 1px solid rgba(229, 91, 91, 0.3);
       padding: 8px 12px;
       font-size: 12px;
-      width: auto;
-      margin-top: 0;
       cursor: pointer;
       border-radius: 8px;
     }
@@ -105,8 +98,6 @@
       border: 1px solid rgba(229, 169, 104, 0.3);
       padding: 8px 12px;
       font-size: 12px;
-      width: auto;
-      margin-top: 0;
       cursor: pointer;
       border-radius: 8px;
     }
@@ -143,15 +134,13 @@
     .card-body { display: flex; gap: 12px; }
 
     .tea-img {
-      width: 75px;
-      height: 75px;
+      width: 70px;
+      height: 70px;
       border-radius: 10px;
       object-fit: cover;
       flex-shrink: 0;
       border: 1px solid var(--border-color);
     }
-
-    .tea-info { flex-grow: 1; }
 
     .notes-box {
       background: rgba(0, 0, 0, 0.25);
@@ -161,7 +150,6 @@
       font-size: 13px;
       border-radius: 0 8px 8px 0;
       color: #d1c9bf;
-      line-height: 1.4;
       white-space: pre-wrap;
     }
 
@@ -176,9 +164,9 @@
 
     #pdf-template {
       display: none;
-      background: #faf7f2;
+      background: #ffffff;
       color: #2c2623;
-      padding: 24px;
+      padding: 20px;
       font-family: sans-serif;
     }
   </style>
@@ -187,7 +175,6 @@
 
   <h2>🍵 Чайний Склад</h2>
 
-  <!-- Форма додавання -->
   <div class="form-group">
     <label>Назва чаю</label>
     <input type="text" id="teaName" placeholder="наприклад: Менхай 7562">
@@ -227,14 +214,13 @@
   <button class="btn" onclick="addTea()">Додати до колекції</button>
   <button class="btn btn-secondary" onclick="downloadPDF()">📄 Завантажити PDF-каталог</button>
 
-  <!-- Список чаю -->
   <div class="tea-list" id="teaList"></div>
 
-  <!-- Прихований контейнер для PDF -->
+  <!-- Контейнер для PDF -->
   <div id="pdf-template">
-    <h1 style="color: #2a1e15; margin-bottom: 5px;">Моя Чайна Колекція</h1>
-    <p style="color: #8c7b6c; font-size: 12px; margin-top: 0;">Особиста бібліотека чаювань</p>
-    <hr style="border: 0; border-top: 1px solid #d5c8b8; margin-bottom: 20px;">
+    <h2 style="color: #2a1e15; margin-bottom: 5px; border-bottom: 2px solid #e5a968; padding-bottom: 8px;">
+      🍃 Моя Чайна Колекція
+    </h2>
     <div id="pdfContent"></div>
   </div>
 
@@ -245,53 +231,34 @@
     let teas = [];
     let currentPhotoBase64 = "";
 
-    // 1. Завантаження даних з Telegram CloudStorage або LocalStorage
     function loadTeas() {
       if (tg.CloudStorage) {
-        tg.CloudStorage.getItem('my_teas_cloud', (err, value) => {
-          let cloudTeas = [];
+        tg.CloudStorage.getItem('my_teas_cloud_v2', (err, value) => {
           if (!err && value) {
-            try { cloudTeas = JSON.parse(value); } catch(e) {}
-          }
-          
-          let localTeas = JSON.parse(localStorage.getItem('my_teas_ukr')) || [];
-          
-          // Об'єднуємо дані: якщо позиції є у хмарі, але немає фото, підтягуємо локальні фото
-          if (cloudTeas.length > 0) {
-            teas = cloudTeas.map(cTea => {
-              const match = localTeas.find(lTea => lTea.name === cTea.name && lTea.year === cTea.year);
-              return { ...cTea, photo: match ? match.photo : "" };
-            });
+            try { teas = JSON.parse(value); } catch(e) { teas = []; }
           } else {
-            teas = localTeas;
+            teas = JSON.parse(localStorage.getItem('my_teas_ukr_v2')) || [];
           }
           renderTeas();
         });
       } else {
-        teas = JSON.parse(localStorage.getItem('my_teas_ukr')) || [];
+        teas = JSON.parse(localStorage.getItem('my_teas_ukr_v2')) || [];
         renderTeas();
       }
     }
 
-    // 2. Збереження (текст у хмару, важкі фото — в пам'ять пристрою)
     function saveTeas() {
-      localStorage.setItem('my_teas_ukr', JSON.stringify(teas));
+      const dataStr = JSON.stringify(teas);
+      localStorage.setItem('my_teas_ukr_v2', dataStr);
 
       if (tg.CloudStorage) {
-        const lightTeas = teas.map(t => ({
-          name: t.name,
-          year: t.year,
-          category: t.category,
-          notes: t.notes
-        }));
-        
-        tg.CloudStorage.setItem('my_teas_cloud', JSON.stringify(lightTeas), (err) => {
-          if (err) console.error("CloudStorage save error:", err);
+        tg.CloudStorage.setItem('my_teas_cloud_v2', dataStr, (err) => {
+          if (err) console.error("CloudStorage error:", err);
         });
       }
     }
 
-    // Обробка фото із автоматичним стисненням
+    // Компрессия фото до сверхлегкого размера (200px), чтобы картинка летало в CloudStorage
     document.getElementById('teaPhoto').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
@@ -301,13 +268,14 @@
           img.src = event.target.result;
           img.onload = function() {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 350;
+            const MAX_WIDTH = 200;
             const scaleFactor = MAX_WIDTH / img.width;
             canvas.width = MAX_WIDTH;
             canvas.height = img.height * scaleFactor;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.65);
+            // Сжатие до JPEG 0.5 качества — занимает единицы килобайт!
+            currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.5);
           }
         };
         reader.readAsDataURL(file);
@@ -321,7 +289,7 @@
       pdfContent.innerHTML = '';
 
       if (teas.length === 0) {
-        list.innerHTML = '<p style="text-align: center; color: var(--hint-color); font-size: 13px; margin-top: 30px;">Колекція порожня. Додай свій перший чай вище!</p>';
+        list.innerHTML = '<p style="text-align: center; color: var(--hint-color); font-size: 13px; margin-top: 30px;">Колекція порожня. Додай свій перший чай!</p>';
         return;
       }
 
@@ -336,7 +304,7 @@
             </div>
             <div class="card-body">
               ${photoHtml}
-              <div class="tea-info">
+              <div style="flex-grow: 1;">
                 <div class="notes-box">${tea.notes || 'Без опису'}</div>
               </div>
             </div>
@@ -347,17 +315,19 @@
           </div>
         `;
 
-        const pdfPhotoHtml = tea.photo ? `<img src="${tea.photo}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; float: left; margin-right: 12px;">` : '';
+        // Вёрстка для PDF-файла (с разрывами страниц html2pdf)
+        const pdfPhotoHtml = tea.photo ? `<img src="${tea.photo}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; float: left; margin-right: 10px;">` : '';
         pdfContent.innerHTML += `
-          <div style="background: #fff; padding: 14px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #e8e2d8; page-break-inside: avoid; overflow: hidden;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <strong style="font-size: 15px; color: #1a1615;">${tea.name} (${tea.year} р.)</strong>
-              <span style="background: #f4ebe1; color: #6b3e26; padding: 3px 8px; font-size: 11px; border-radius: 4px; font-weight: bold;">${tea.category}</span>
+          <div class="pdf-item" style="background: #faf7f2; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #e2d7c7; page-break-inside: avoid;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <strong style="font-size: 14px; color: #1a1615;">${tea.name} (${tea.year} р.)</strong>
+              <span style="background: #e5a968; color: #1a1615; padding: 2px 6px; font-size: 10px; border-radius: 4px; font-weight: bold;">${tea.category}</span>
             </div>
             ${pdfPhotoHtml}
-            <p style="background: #faf6f0; padding: 8px 10px; border-left: 3px solid #c59b6c; font-size: 12px; margin: 0; color: #38302a; min-height: 40px;">
+            <div style="font-size: 12px; color: #38302a; line-height: 1.3;">
               ${tea.notes || 'Без опису'}
-            </p>
+            </div>
+            <div style="clear: both;"></div>
           </div>
         `;
       });
@@ -399,13 +369,12 @@
 
     function shareTea(index) {
       const tea = teas[index];
-      
       const cardText = `🍃 *${tea.name.toUpperCase()}* (${tea.year} р.)\n` +
                        `━━━━━━━━━━━━━━━━━━\n` +
                        `🏷 *Категорія:* #${tea.category.replace(/\s+/g, '_')}\n` +
-                       `📝 *Враження та дегустація:*\n${tea.notes || 'Чудовий чай, рекомендую!'}\n` +
+                       `📝 *Враження:*\n${tea.notes || 'Чудовий чай!'}\n` +
                        `━━━━━━━━━━━━━━━━━━\n` +
-                       `📌 _Збережено в Чайному Складі_`;
+                       `📌 _Чайний Склад_`;
 
       const shareUrl = `https://t.me/share/url?url=&text=${encodeURIComponent(cardText)}`;
       tg.openTelegramLink(shareUrl);
@@ -418,11 +387,12 @@
       element.style.display = 'block';
 
       const opt = {
-        margin:       10,
+        margin:       8,
         filename:     'Moya_Chaina_Kolektsiya.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        image:        { type: 'jpeg', quality: 0.95 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
       html2pdf().set(opt).from(element).save().then(() => {
